@@ -419,15 +419,22 @@ SEED_GALLERY_PIN="482917"
 | `npm run db:deploy` | Apply committed migrations |
 | `npm run db:seed` | Reseed the demo workspace |
 | `npm run preflight` | Check env, database and storage before a deploy — including that the bucket refuses an unsigned read |
+| `npm run acceptance` | Walk every clause of the brief against a running instance, API and browser. `BASE=https://… npm run acceptance` runs it against the deployment |
 
 ---
 
 ## Tests
 
 ```bash
-npm test          # 67 integration tests
-npm run test:e2e  # 1 end-to-end pass through the whole workflow
+npm test           # 85 integration tests
+npm run test:e2e   # 1 end-to-end pass through the whole workflow
+npm run acceptance # 86 checks, one per clause of the brief
 ```
+
+`npm run acceptance` is the one to run against a deployment. It exercises three
+roles and two separate studios through the real HTTP API and a real browser,
+with each clause numbered to the section of the specification it comes from, and
+exits non-zero if any of them fails.
 
 The integration suite runs against a real Postgres database, not mocks, because
 most of what is being tested *is* a query — an authorization rule expressed as a

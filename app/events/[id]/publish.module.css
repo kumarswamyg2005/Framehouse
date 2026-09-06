@@ -121,18 +121,58 @@
   flex-wrap: wrap;
 }
 
+/* The one thing on this screen the lead has come to collect, so it is the
+   brightest element on it. */
 .linkValue {
   flex: 1 1 260px;
-  padding: 10px 12px;
+  padding: 11px 13px;
   background: var(--ink);
-  border: 1px solid var(--ink-line);
-  border-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--safelight) 55%, transparent);
+  border-radius: 3px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--bone);
   overflow-x: auto;
   white-space: nowrap;
   user-select: all;
+  cursor: text;
+  transition: border-color var(--dur-ui) var(--ease-out);
+}
+
+.linkValue:hover {
+  border-color: var(--safelight);
+}
+
+.linkValue::selection {
+  background: color-mix(in srgb, var(--safelight) 40%, transparent);
+}
+
+.messageBlock {
+  margin-top: 22px;
+  padding: 16px 18px;
+  border: 1px solid var(--ink-line);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--ink) 60%, transparent);
+}
+
+.messagePreview {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  border-radius: 3px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--bone-dim);
+  white-space: pre-wrap;
+}
+
+.messageNote {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--bone-dim);
+  max-width: 52ch;
 }
 
 .pinNote {

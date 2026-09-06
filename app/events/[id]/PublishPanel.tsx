@@ -41,7 +41,23 @@ export function PublishPanel({
   // A published gallery shows its link, not a PIN field. Changing the PIN is an
   // explicit step, because it signs every client currently viewing back out.
   const [changingPin, setChangingPin] = useState(false)
+  const [copied, setCopied] = useState<'link' | 'message' | null>(null)
+  /**
+   * The PIN that was just typed, held in memory only for this panel session.
+   *
+   * It exists so the lead can copy a ready-to-send message immediately after
+   * publishing. It is never stored, never re-fetched, and gone on reload — the
+   * row only ever holds an argon2id hash.
+   */
+  const [justSetPin, setJustSetPin] = useState<string | null>(null)
   const boxes = useRef<(HTMLInputElement | null)[]>([])
+
+  function copy(what: 'link' | 'message', text: string, toast: string) {
+    void navigator.clipboard?.writeText(text)
+    setCopied(what)
+    setTimeout(() => setCopied(null), 2000)
+    onToast(toast)
+  }
 
   const alreadyPublished = gallery?.isPublished === true
 
@@ -83,6 +99,7 @@ export function PublishPanel({
 
     const { slug } = (await response.json()) as { slug: string }
     onChanged({ ...gallery, slug, title, isPublished: true })
+    setJustSetPin(pin)
     setDigits(Array(6).fill(''))
     setPending(false)
     setChangingPin(false)
@@ -109,23 +126,62 @@ export function PublishPanel({
           the link and the PIN separately.
         </p>
 
-        <p className={styles.linkLabel}>Gallery link</p>
+        <p className={styles.linkLabel}>Gallery link — send this to your client</p>
         <div className={styles.link}>
-          <span className={styles.linkValue}>{shareUrl}</span>
-          <button
-            type="button"
-            className="btn btnQuiet"
-            onClick={() => {
-              void navigator.clipboard?.writeText(shareUrl)
-              onToast('Link copied')
+          {/* Click anywhere on it to select the whole URL, for anyone who would
+              rather drag-select than press a button. */}
+          <span
+            className={styles.linkValue}
+            onClick={(event) => {
+              const range = document.createRange()
+              range.selectNodeContents(event.currentTarget)
+              const selection = window.getSelection()
+              selection?.removeAllRanges()
+              selection?.addRange(range)
             }}
           >
-            Copy
+            {shareUrl}
+          </span>
+          <button
+            type="button"
+            className={`btn ${copied === 'link' ? 'btnPrimary' : 'btnQuiet'}`}
+            onClick={() => copy('link', shareUrl, 'Link copied')}
+          >
+            {copied === 'link' ? 'Copied' : 'Copy link'}
           </button>
           <a className="btn btnQuiet" href={shareUrl} target="_blank" rel="noreferrer">
             Open
           </a>
         </div>
+
+        {justSetPin && (
+          <div className={styles.messageBlock}>
+            <p className={styles.linkLabel}>Ready to send</p>
+            <p className={styles.messagePreview}>
+              {`Your photographs from ${gallery.title} are ready.\n\n${shareUrl}\nPIN: ${justSetPin}`}
+            </p>
+            <div className={styles.row}>
+              <button
+                type="button"
+                className={`btn ${copied === 'message' ? 'btnPrimary' : 'btnQuiet'}`}
+                onClick={() =>
+                  copy(
+                    'message',
+                    `Your photographs from ${gallery.title} are ready.\n\n${shareUrl}\nPIN: ${justSetPin}`,
+                    'Message copied'
+                  )
+                }
+              >
+                {copied === 'message' ? 'Copied' : 'Copy message with PIN'}
+              </button>
+            </div>
+            <p className={styles.messageNote}>
+              Shown once, while you are still on this screen. The PIN is stored as a one-way hash,
+              so it cannot be retrieved later — and for a real client, send the link and the PIN by
+              different routes.
+            </p>
+          </div>
+        )}
 
         <p className={styles.pinNote}>
           The PIN is stored as a one-way hash, so it cannot be shown again. Setting a new one signs
