@@ -1,0 +1,127 @@
+.shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+}
+
+.column {
+  width: 100%;
+  max-width: 348px;
+}
+
+.wordmark {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  color: var(--bone);
+}
+
+.tagline {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--bone-dim);
+}
+
+.rule {
+  height: 1px;
+  background: var(--ink-line);
+  margin: 28px 0;
+  border: 0;
+}
+
+.field {
+  display: block;
+  margin-bottom: 18px;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  color: var(--bone-dim);
+  margin-bottom: 7px;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 12px;
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  color: var(--bone);
+  font-size: 16px; /* 16px avoids the iOS zoom-on-focus jump */
+  transition: border-color 120ms ease;
+}
+
+.input::placeholder {
+  color: var(--bone-dim);
+  opacity: 0.6;
+}
+
+.input:hover:not(:disabled) {
+  border-color: #38424f;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--bone);
+}
+
+.input:disabled {
+  opacity: 0.6;
+}
+
+.hint {
+  margin: 7px 0 0;
+  font-size: 12px;
+  color: var(--bone-dim);
+}
+
+/* Errors are carried by text and motion, never by colour — the one accent in
+   this system is reserved for selection marks. See DESIGN.md. */
+.error {
+  margin: 0 0 18px;
+  padding-left: 11px;
+  border-left: 1px solid var(--bone);
+  font-size: 14px;
+  color: var(--bone);
+}
+
+.submit {
+  width: 100%;
+  padding: 12px;
+  background: var(--bone);
+  color: var(--ink);
+  border: 1px solid var(--bone);
+  border-radius: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+
+.submit:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.footer {
+  margin: 24px 0 0;
+  font-size: 14px;
+  color: var(--bone-dim);
+}
+
+.footer a {
+  color: var(--bone);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ink-line);
+  padding-bottom: 1px;
+}
+
+.footer a:hover {
+  border-bottom-color: var(--bone-dim);
+}

@@ -1,0 +1,202 @@
+.page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 24px 96px;
+}
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 56px 0 20px;
+}
+
+.title {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--bone);
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--bone-dim);
+}
+
+/* A ledger, not a card grid: hairline rules, no shadows, no rounded panels. */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--ink-line);
+}
+
+.row {
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.rowLink {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 4px 24px;
+  text-decoration: none;
+  opacity: 0.88;
+  transition: opacity 120ms ease;
+}
+
+.rowLink:hover {
+  opacity: 1;
+}
+
+.eventName {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-size: 28px;
+  line-height: 1.15;
+  color: var(--bone);
+}
+
+.eventMeta {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--bone-dim);
+}
+
+.rowRight {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--bone-dim);
+  text-align: right;
+}
+
+.published {
+  color: var(--ok);
+}
+
+.empty {
+  border-top: 1px solid var(--ink-line);
+  padding: 44px 0;
+  font-size: 14px;
+  color: var(--bone-dim);
+  max-width: 42ch;
+}
+
+/* --- new event ------------------------------------------------------------ */
+
+.newToggle {
+  background: var(--bone);
+  color: var(--ink);
+  border: 1px solid var(--bone);
+  border-radius: 2px;
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.newToggle:hover {
+  opacity: 0.88;
+}
+
+.newToggleOpen {
+  background: none;
+  color: var(--bone-dim);
+  border-color: var(--ink-line);
+}
+
+.form {
+  border-top: 1px solid var(--ink-line);
+  padding: 24px 0 28px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 2fr 1fr;
+}
+
+.formWide {
+  grid-column: 1 / -1;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  color: var(--bone-dim);
+  margin-bottom: 7px;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  color: var(--bone);
+  font-size: 16px;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 62px;
+}
+
+.formActions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.submit {
+  background: var(--bone);
+  color: var(--ink);
+  border: 1px solid var(--bone);
+  border-radius: 2px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.error {
+  padding-left: 11px;
+  border-left: 1px solid var(--bone);
+  font-size: 14px;
+  color: var(--bone);
+}
+
+@media (max-width: 620px) {
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    padding-top: 36px;
+  }
+
+  .title {
+    font-size: 34px;
+  }
+
+  .form {
+    grid-template-columns: 1fr;
+  }
+
+  .rowLink {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .rowRight {
+    text-align: left;
+  }
+}

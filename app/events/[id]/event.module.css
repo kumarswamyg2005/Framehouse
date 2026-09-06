@@ -1,0 +1,206 @@
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px 120px;
+}
+
+.back {
+  display: inline-block;
+  margin: 32px 0 0;
+  font-size: 12px;
+  color: var(--bone-dim);
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--bone);
+}
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 0 24px;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.title {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--bone);
+}
+
+.meta {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--bone-dim);
+}
+
+.description {
+  margin: 14px 0 0;
+  font-size: 14px;
+  color: var(--bone-dim);
+  max-width: 56ch;
+}
+
+.section {
+  padding: 40px 0 0;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  color: var(--bone);
+  margin: 0 0 4px;
+}
+
+.sectionNote {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--bone-dim);
+  max-width: 52ch;
+}
+
+.roster {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  border-top: 1px solid var(--ink-line);
+  max-width: 620px;
+}
+
+.rosterRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 2px;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.rosterName {
+  font-size: 14px;
+  color: var(--bone);
+}
+
+.rosterEmail {
+  font-size: 12px;
+  color: var(--bone-dim);
+  margin-left: 10px;
+}
+
+.remove {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 12px;
+  color: var(--bone-dim);
+  cursor: pointer;
+}
+
+.remove:hover:not(:disabled) {
+  color: var(--bone);
+}
+
+.remove:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.addRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  max-width: 620px;
+}
+
+.addField {
+  flex: 1 1 200px;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  color: var(--bone-dim);
+  margin-bottom: 7px;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  color: var(--bone);
+  font-size: 16px;
+}
+
+.submit {
+  background: var(--bone);
+  color: var(--ink);
+  border: 1px solid var(--bone);
+  border-radius: 2px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.error {
+  margin: 14px 0 0;
+  padding-left: 11px;
+  border-left: 1px solid var(--bone);
+  font-size: 14px;
+  color: var(--bone);
+  max-width: 620px;
+}
+
+/* Shown once, when adding a member also created their account. */
+.credential {
+  margin: 18px 0 0;
+  padding: 16px 18px;
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  max-width: 620px;
+}
+
+.credentialTitle {
+  font-size: 14px;
+  color: var(--bone);
+  margin: 0 0 6px;
+}
+
+.credentialBody {
+  margin: 0;
+  font-size: 14px;
+  color: var(--bone-dim);
+}
+
+.credentialValue {
+  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--bone);
+  user-select: all;
+}
+
+@media (max-width: 620px) {
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+}
