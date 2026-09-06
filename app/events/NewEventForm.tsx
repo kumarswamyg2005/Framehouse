@@ -81,7 +81,7 @@ export function NewEventForm() {
 
         <div className={styles.formWide}>
           <label className="label" htmlFor="event-description">
-            Description <span style={{ opacity: 0.6 }}>optional</span>
+            Description <span className="labelHint">optional</span>
           </label>
           <textarea
             className="input"

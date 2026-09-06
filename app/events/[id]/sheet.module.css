@@ -233,10 +233,11 @@
   color: var(--bone-dim);
 }
 
+/* No extra opacity. --bone-dim on --ink is about 6:1; dimming it to 0.7 took an
+   11px label to 3.52:1, under the 4.5:1 floor in DESIGN.md. */
 .byline {
   font-size: 11px;
   color: var(--bone-dim);
-  opacity: 0.7;
   margin-left: 6px;
 }
 

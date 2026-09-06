@@ -114,7 +114,7 @@ export function TeamRoster({ eventId, members }: { eventId: string; members: Mem
         </div>
         <div className={styles.addField}>
           <label className="label" htmlFor="member-name">
-            Name <span style={{ opacity: 0.6 }}>if new</span>
+            Name <span className="labelHint">if new</span>
           </label>
           <input
             className="input"

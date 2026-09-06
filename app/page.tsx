@@ -194,7 +194,11 @@ export default async function Home() {
                     */}
                     <div className={styles.passPinRow}>
                       <span className={styles.passPinLabel}>PIN</span>
-                      <span className={styles.passDigits} aria-label="PIN, sent separately">
+                      <span
+                        className={styles.passDigits}
+                        role="img"
+                        aria-label="PIN, sent separately"
+                      >
                         {Array.from({ length: 6 }, (_, i) => (
                           <span
                             className={`${styles.passDigit} ${styles.passDigitMasked}`}

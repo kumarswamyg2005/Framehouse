@@ -189,6 +189,9 @@ export function Workspace({
               each stat carries an accessible name that reads as one phrase. */}
           <span
             className={sheet.stat}
+            // role="img": aria-label is prohibited on a bare span, and this is a
+            // composite of two styled fragments that reads as one phrase.
+            role="img"
             aria-label={`${photos.length} ${photos.length === 1 ? 'frame' : 'frames'}`}
           >
             <span className={sheet.statValue} aria-hidden="true">
@@ -200,6 +203,7 @@ export function Workspace({
           {isLead && (
             <span
               className={`${sheet.stat} ${sheet.statSelected}`}
+              role="img"
               aria-label={`${selectedIds.length} selected`}
             >
               <span className={sheet.statValue} aria-hidden="true">
@@ -213,6 +217,7 @@ export function Workspace({
             <span className={sheet.stat}>
               <span
                 className={`${sheet.badge} ${gallery?.isPublished ? sheet.badgeLive : ''}`}
+                role="img"
                 aria-label={gallery?.isPublished ? 'Gallery published' : 'Gallery draft'}
               >
                 <span className={sheet.badgeDot} aria-hidden="true" />

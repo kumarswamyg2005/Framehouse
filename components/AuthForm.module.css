@@ -201,14 +201,19 @@
   color: var(--bone-dim);
 }
 
+/* A real underline rather than an inset box-shadow: a link inside a paragraph
+   has to be distinguishable without relying on colour, and a box-shadow is not
+   recognised as a distinguishing style. */
 .footer a {
   color: var(--bone);
-  text-decoration: none;
-  box-shadow: inset 0 -1px 0 var(--ink-line);
+  text-decoration: underline;
+  text-decoration-color: var(--bone-dim);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
 }
 
 .footer a:hover {
-  box-shadow: inset 0 -1px 0 var(--bone-dim);
+  text-decoration-color: var(--bone);
 }
 
 @media (max-width: 880px) {
