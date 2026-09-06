@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { prisma } from '@/lib/db/prisma'
 import { signGalleryToken, verifyGalleryToken } from '@/lib/auth/jwt'
 import {
+  GALLERY_PAGE_SIZE,
   currentPinVersion,
   getGallery,
   getPublicGallery,
@@ -11,6 +12,7 @@ import {
   unpublishGallery,
   verifyGalleryPin,
 } from '@/lib/data/gallery'
+import { authenticate } from '@/lib/data/accounts'
 import { expectApiError, makeEvent, makePhoto, makeUser, resetDatabase } from './helpers'
 
 vi.mock('@/lib/storage/r2', async (importOriginal) => {
@@ -203,7 +205,9 @@ describe('PIN verification', () => {
 
   it('records attempts for slugs that do not resolve', async () => {
     await expectApiError(verifyGalleryPin('zzzzzzzzzzzz', IP, { pin: '000000' }), 'UNAUTHENTICATED')
-    expect(await prisma.pinAttempt.count({ where: { gallerySlug: 'zzzzzzzzzzzz' } })).toBe(1)
+    expect(
+      await prisma.accessAttempt.count({ where: { kind: 'GALLERY_PIN', subject: 'zzzzzzzzzzzz' } })
+    ).toBe(1)
   })
 })
 
@@ -250,5 +254,125 @@ describe('customer reads', () => {
       expect(photo).not.toHaveProperty('storageKey')
       expect(photo.thumbnailUrl).toContain('signed')
     }
+  })
+})
+
+describe('sign-in throttling', () => {
+  it('locks out after ten failures for the same email and IP', async () => {
+    const user = await makeUser('ADMIN', 'the-real-password')
+
+    for (let attempt = 1; attempt <= 10; attempt++) {
+      await expectApiError(
+        authenticate({ email: user.email, password: 'wrong-password' }, IP),
+        'UNAUTHENTICATED'
+      )
+    }
+
+    // Even the correct password is refused while locked out.
+    const limited = (await expectApiError(
+      authenticate({ email: user.email, password: 'the-real-password' }, IP),
+      'RATE_LIMITED'
+    )) as Error & { headers: Record<string, string> }
+    expect(Number(limited.headers['Retry-After'])).toBeGreaterThan(0)
+  })
+
+  it('limits per IP, so one attacker cannot lock a real user out', async () => {
+    const user = await makeUser('ADMIN', 'the-real-password')
+
+    for (let attempt = 1; attempt <= 10; attempt++) {
+      await expectApiError(
+        authenticate({ email: user.email, password: 'wrong-password' }, 'attacker-ip'),
+        'UNAUTHENTICATED'
+      )
+    }
+    await expectApiError(
+      authenticate({ email: user.email, password: 'the-real-password' }, 'attacker-ip'),
+      'RATE_LIMITED'
+    )
+
+    // The real user, on their own connection, is unaffected.
+    await expect(
+      authenticate({ email: user.email, password: 'the-real-password' }, 'their-own-ip')
+    ).resolves.toMatchObject({ email: user.email })
+  })
+
+  it('counts unknown addresses too, so the limiter is not an oracle', async () => {
+    for (let attempt = 1; attempt <= 10; attempt++) {
+      await expectApiError(
+        authenticate({ email: 'nobody@nowhere.test', password: 'x'.repeat(12) }, IP),
+        'UNAUTHENTICATED'
+      )
+    }
+    await expectApiError(
+      authenticate({ email: 'nobody@nowhere.test', password: 'x'.repeat(12) }, IP),
+      'RATE_LIMITED'
+    )
+  })
+
+  // Read-then-write under READ COMMITTED lets simultaneous requests both see
+  // the same count and both proceed. The guard runs SERIALIZABLE for this.
+  it('holds the ceiling under concurrent attempts', async () => {
+    const user = await makeUser('ADMIN', 'the-real-password')
+
+    const outcomes = await Promise.all(
+      Array.from({ length: 16 }, () =>
+        authenticate({ email: user.email, password: 'wrong-password' }, 'burst-ip')
+          .then(() => 'ok')
+          .catch((e: { code?: string }) => e.code ?? 'other')
+      )
+    )
+
+    const allowed = outcomes.filter((o) => o === 'UNAUTHENTICATED').length
+    // Ten failures are allowed; the rest must be refused rather than slipping
+    // through on a stale read.
+    expect(allowed).toBeLessThanOrEqual(10)
+    expect(outcomes).toContain('RATE_LIMITED')
+  })
+})
+
+describe('gallery pagination', () => {
+  it('returns a bounded page and a cursor, and walks the whole selection', async () => {
+    const admin = await makeUser('ADMIN')
+    const member = await makeUser('MEMBER')
+    const event = await makeEvent(admin, [member])
+
+    const photos = []
+    for (let i = 0; i < 45; i++) photos.push(await makePhoto(event.id, member))
+    const ids = photos.map((p) => p.id)
+
+    const saved = await saveSelection(admin, event.id, { title: 'Big', photoIds: ids })
+    const { slug } = await publishGallery(admin, saved.id, { pin: PIN })
+
+    const first = await getPublicGallery(slug)
+    expect(first.total).toBe(45)
+    expect(first.photos).toHaveLength(GALLERY_PAGE_SIZE)
+    expect(first.nextCursor).not.toBeNull()
+
+    const second = await getPublicGallery(slug, { after: first.nextCursor! })
+    expect(second.photos).toHaveLength(45 - GALLERY_PAGE_SIZE)
+    expect(second.nextCursor).toBeNull()
+
+    // Every selected photo appears exactly once across the pages, in order.
+    const walked = [...first.photos, ...second.photos].map((p) => p.id)
+    expect(walked).toEqual(ids)
+    expect(new Set(walked).size).toBe(45)
+  })
+
+  it('still refuses an unselected photo reached through a later page', async () => {
+    const admin = await makeUser('ADMIN')
+    const member = await makeUser('MEMBER')
+    const event = await makeEvent(admin, [member])
+
+    const selected = []
+    for (let i = 0; i < 40; i++) selected.push(await makePhoto(event.id, member))
+    const unselected = await makePhoto(event.id, member)
+
+    const saved = await saveSelection(admin, event.id, {
+      title: 'Big',
+      photoIds: selected.map((p) => p.id),
+    })
+    const { slug } = await publishGallery(admin, saved.id, { pin: PIN })
+
+    await expectApiError(getPublicPhotoUrl(slug, unselected.id), 'NOT_FOUND')
   })
 })

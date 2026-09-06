@@ -155,18 +155,22 @@ exist, and both cost the same amount of work.
 
 The seams are already where they need to be.
 
-**Thumbnails** move from synchronous generation inside `confirm` to a queue.
-`PhotoStatus.PENDING` exists for this: write the row immediately, enqueue the
-key, let a worker produce the thumbnail and flip it to `READY`.
+**Thumbnails** already run off the request path. `confirm` writes a `PENDING`
+row and returns; `finalisePhoto()` decodes, resizes and flips the row to `READY`
+inside Next's `after()`. The remaining step is to move that call from `after()`
+to a real queue with its own worker — same function, different trigger — which
+is what stops one instance being saturated by a burst.
 
 **Photo listing** already uses cursor pagination rather than offset — deliberate,
 because a contact sheet is appended to while it is being scrolled and `OFFSET`
 would skip or repeat frames as rows shift underneath it. The index
 `[eventId, createdAt]` supports it directly.
 
-**The customer gallery** currently presigns every selected photograph on load.
-At 600 photographs that is 600 signings per page view; it should paginate the
-same way the workspace sheet does.
+**The customer gallery** paginates 36 photographs at a time, pulling the next
+page as the end of the sheet comes into view, so signing stays proportional to
+what is actually looked at rather than to how large the gallery is.
 
-**Rate limiting** moves to Redis, or to `SELECT ... FOR UPDATE`, if it ever
-guards something more valuable than a PIN.
+**Rate limiting** is atomic already, via a `pg_advisory_xact_lock` keyed on the
+subject — it serialises requests for the same email or gallery and nothing else.
+It would move to Redis only if the attempt volume itself became a database
+problem, which is a much later concern than correctness.

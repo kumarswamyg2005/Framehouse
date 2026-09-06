@@ -6,7 +6,7 @@ import { buildGallerySlug, buildStorageKey, buildThumbnailKey } from '@/lib/ids'
 
 /** Order matters: children before parents, so foreign keys never block a wipe. */
 export async function resetDatabase(): Promise<void> {
-  await prisma.pinAttempt.deleteMany()
+  await prisma.accessAttempt.deleteMany()
   await prisma.galleryPhoto.deleteMany()
   await prisma.gallery.deleteMany()
   await prisma.photo.deleteMany()

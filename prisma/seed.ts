@@ -46,7 +46,7 @@ async function main() {
   console.log('Clearing existing data…')
   // Ordered by dependency; cascades would cover most of this, but being explicit
   // keeps the seed readable and safe to run against a partially-migrated schema.
-  await prisma.pinAttempt.deleteMany()
+  await prisma.accessAttempt.deleteMany()
   await prisma.galleryPhoto.deleteMany()
   await prisma.gallery.deleteMany()
   await prisma.photo.deleteMany()

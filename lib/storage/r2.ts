@@ -105,6 +105,23 @@ export async function headObject(key: string): Promise<ObjectFacts | null> {
   }
 }
 
+/**
+ * Reads only the first `bytes` of an object. Used to sniff the file signature
+ * during confirm without pulling a 25 MB original into a request that is about
+ * to return.
+ */
+export async function getObjectHead(key: string, bytes: number): Promise<Uint8Array | null> {
+  try {
+    const result = await r2().send(
+      new GetObjectCommand({ Bucket: bucket(), Key: key, Range: `bytes=0-${bytes - 1}` })
+    )
+    if (!result.Body) return null
+    return new Uint8Array(await result.Body.transformToByteArray())
+  } catch {
+    return null
+  }
+}
+
 /** Server-side read, used to generate a thumbnail from the uploaded original. */
 export async function getObjectBytes(key: string): Promise<Uint8Array> {
   const result = await r2().send(new GetObjectCommand({ Bucket: bucket(), Key: key }))

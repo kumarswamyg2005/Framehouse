@@ -87,6 +87,15 @@ test('lead publishes a gallery and a customer opens it with the PIN', async ({ b
   await expect(member.getByText(`${UPLOAD_COUNT} uploaded`)).toBeVisible({ timeout: 60_000 })
   await expect(member.locator('ul li button[aria-label*="frame"]')).toHaveCount(UPLOAD_COUNT)
 
+  // Thumbnails are generated after the confirm response returns, so frames
+  // arrive PENDING and the sheet polls until they are ready. Asserting the
+  // transition explicitly means a broken finalisation fails here rather than
+  // showing up later as a mystery timeout on the first selection click.
+  await expect(member.locator('ul li button[aria-label*="still processing"]')).toHaveCount(0, {
+    timeout: 60_000,
+  })
+  await expect(member.locator('ul li button[aria-label*="frame"] img')).toHaveCount(UPLOAD_COUNT)
+
   // A member cannot publish: the control is not rendered for them at all.
   await expect(member.getByRole('button', { name: 'Publish' })).toHaveCount(0)
 

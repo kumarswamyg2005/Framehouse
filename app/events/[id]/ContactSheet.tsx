@@ -10,7 +10,9 @@ export type SheetPhoto = {
   width: number | null
   height: number | null
   uploadedBy: { id: string; name: string }
-  thumbnailUrl: string
+  /** Still being decoded and resized; there is no thumbnail to show yet. */
+  pending: boolean
+  thumbnailUrl: string | null
 }
 
 type Props = {
@@ -162,11 +164,14 @@ export function ContactSheet({
                 tabIndex={index === focusIndex ? 0 : -1}
                 aria-pressed={canSelect ? isSelected : undefined}
                 aria-label={
-                  canSelect
-                    ? `${photo.filename}, frame ${index + 1}${isSelected ? ', selected' : ''}`
-                    : `${photo.filename}, frame ${index + 1}`
+                  photo.pending
+                    ? `${photo.filename}, frame ${index + 1}, still processing`
+                    : canSelect
+                      ? `${photo.filename}, frame ${index + 1}${isSelected ? ', selected' : ''}`
+                      : `${photo.filename}, frame ${index + 1}`
                 }
                 onFocus={() => setFocusIndex(index)}
+                disabled={photo.pending}
                 onClick={(event) => {
                   if (!canSelect) return setLoupeIndex(index)
                   if (event.shiftKey) return selectRange(index)
@@ -176,7 +181,16 @@ export function ContactSheet({
                 onDoubleClick={() => setLoupeIndex(index)}
               >
                 {/* Thumbnails are presigned R2 URLs, never public ones. */}
-                <img src={photo.thumbnailUrl} alt={photo.filename} loading="lazy" decoding="async" />
+                {photo.thumbnailUrl ? (
+                  <img
+                    src={photo.thumbnailUrl}
+                    alt={photo.filename}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <span className={styles.pendingFrame} aria-hidden="true" />
+                )}
                 {isSelected && <span className={styles.mark} />}
               </button>
               <span className={styles.frameNo}>

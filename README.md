@@ -292,16 +292,28 @@ to a single slug for two hours.
 every request. A signed token proves a past login, not present standing, so a
 deleted or demoted account loses access immediately instead of at token expiry.
 
-**PINs are hashed and throttled.** argon2id, never stored or logged in
-plaintext, never returned by any endpoint. Five failures per gallery per IP per
-fifteen minutes, then 429 with `Retry-After`. A wrong PIN and a nonexistent
-gallery produce the same message and the same amount of work, so the endpoint
-cannot be used to discover which slugs are real. IPs are salted-hashed before
-they are written down.
+**Both unauthenticated entry points are throttled.** The gallery PIN allows five
+failures per gallery per IP per fifteen minutes; sign-in allows ten per email
+per IP. Both then return 429 with `Retry-After`. Counting and recording happen
+under a Postgres advisory lock keyed on the subject, so simultaneous requests
+cannot both read the same count and both slip through — and unlike a
+`SERIALIZABLE` transaction there is no abort to retry and therefore no way to
+fail open. Subjects and IPs are salted-hashed before they are written down, so
+the throttle table cannot be read back as a list of who has an account.
 
-**Login does not leak account existence.** When the email is unknown, the
-password is verified against a decoy hash rather than returning early, so a
-missing account costs the same wall-clock time as a wrong password.
+**Neither endpoint leaks existence.** An unknown email is verified against a
+decoy hash rather than returning early, so a missing account costs the same
+wall-clock time as a wrong password — and unknown emails are throttled exactly
+like known ones, so the limiter's own behaviour does not become an oracle. The
+same is true of gallery slugs that do not resolve.
+
+**Uploaded bytes are checked, not just their label.** `Content-Type` is bound
+into the presigned PUT signature, but it is still only a claim, so `confirm`
+reads the first 32 bytes of the stored object and matches the file signature
+against the JPEG, PNG and WebP magic numbers. Full decoding happens during
+finalisation; anything that does not decode has its object deleted and its row
+marked `FAILED`, and neither a `PENDING` nor a `FAILED` photo can be selected
+into a gallery.
 
 **Revocation is a live read.** Unpublishing a gallery or clearing its selection
 takes effect on the client's next request. Nothing about publication state is
@@ -400,7 +412,7 @@ SEED_GALLERY_PIN="482917"
 ## Tests
 
 ```bash
-npm test          # 57 integration tests
+npm test          # 67 integration tests
 npm run test:e2e  # 1 end-to-end pass through the whole workflow
 ```
 
@@ -420,6 +432,14 @@ What it covers:
   limit is per IP; republishing clears it.
 - Changing the PIN moves the gallery's PIN generation forward, so a token issued
   under the old one no longer verifies.
+- Sign-in locks out after ten failures, per email and per IP, and unknown
+  addresses are counted the same as known ones.
+- Sixteen simultaneous sign-in attempts do not exceed the configured ceiling.
+- The customer gallery pages, and walking every page yields each selected photo
+  exactly once, in order.
+- `confirm` returns a `PENDING` row; finalisation produces a thumbnail and
+  `READY`, or deletes the object and marks `FAILED` when the bytes do not
+  decode. Neither state can reach a gallery.
 - A correct PIN returns exactly the selected photos, and an unselected photo id
   from the same event returns `404`.
 - Unpublishing, or emptying the selection, revokes an already-issued cookie.
@@ -475,45 +495,38 @@ demo accounts, upload one file, publish, and open the gallery link on a phone.
 
 These are real, and I would fix them roughly in this order.
 
-**1. Thumbnail generation is synchronous inside the confirm request.** A large
-image means the request holds a serverless function open while sharp decodes and
-resizes it, and a burst of uploads is a burst of concurrent CPU-heavy
-invocations. It works comfortably at the scale of a wedding shoot and is the
-wrong shape for a 50,000-photo event. The right fix is to write the row as
-`PENDING`, push the key onto a queue, and have a worker produce the thumbnail
-and flip the row to `READY` — the `PhotoStatus` enum is already in the schema
-for exactly that.
+**1. Thumbnail generation runs after the response, not in a queue.** `confirm`
+now returns as soon as the row is written, and the decode and resize happen in
+Next's `after()` — so the request is fast and a burst of uploads no longer means
+a burst of requests each held open while sharp works. But the work still happens
+inside the same serverless invocation, so total compute is unchanged and a
+single instance can still be saturated. A real queue with a separate worker is
+the next step; the `PhotoStatus` enum and `finalisePhoto()` are already shaped
+for it, so it is a change of trigger rather than a rewrite.
 
-**2. Rate limiting lives in Postgres and is not atomic.** Two simultaneous PIN
-attempts can both read four failures and both proceed, so the real ceiling is
-closer to "about five" than "exactly five". It is deliberate — one fewer service
-to provision for a limiter that guards a six-digit PIN — but it would not hold
-up as a general-purpose limiter, and the table needs periodic pruning. Redis
-with an atomic counter, or a `SELECT ... FOR UPDATE`, would close it.
+**2. Attempt rows are never pruned.** `pruneAttempts()` exists and is correct,
+but nothing calls it on a schedule. On a busy deployment `AccessAttempt` grows
+without bound. A Vercel cron hitting a route that calls it is about ten lines; I
+did not add the route because it needs a shared secret and a cron config that
+would be dead weight in a demo.
 
-**3. Only the PIN endpoint is throttled.** Login is not. The decoy-hash
-comparison means an attacker cannot enumerate accounts, and argon2id makes each
-guess expensive, but there is nothing stopping sustained credential stuffing
-against a known email. The same `PinAttempt` mechanism generalises to it; I ran
-out of time before it did.
-
-**4. Presigned URLs expire while a gallery is still open.** Five minutes is a
+**3. Presigned URLs expire while a gallery is still open.** Five minutes is a
 deliberately tight TTL, and the client-side answer is currently a page reload
 just before they lapse. That is honest but crude — a client scrolling a large
 gallery will see it reload under them. Refreshing individual URLs in the
 background as they approach expiry, or raising the TTL for thumbnails only,
 would both be better.
 
-Smaller things I am aware of: the customer gallery presigns every selected photo
-on load rather than paginating, so a 600-photo gallery does 600 signings per
-page view; the CSP still carries `'unsafe-inline'` in `style-src` because Next
-injects inline styles for fonts and CSS modules, and removing it needs nonce
-plumbing through the document; there is no download-all; deleting an event
-leaves its objects in the bucket because the cascade is only in the database;
-and there is no email delivery, so a temporary password is shown once in the UI
-for the lead to pass on by hand.
+**4. Deleting an event leaves its objects in the bucket.** The cascade is only
+in the database. The fix is either a lifecycle rule on a prefix or a sweep that
+reconciles keys against rows; both need a scheduled job, which is limitation 2
+again.
 
----
+Smaller things I am aware of: there is no download-all; the CSP still carries
+`'unsafe-inline'` in `style-src` because Next injects inline styles for fonts
+and CSS modules, and removing it needs nonce plumbing; and there is no email
+delivery, so a temporary password is shown once in the UI for the lead to pass
+on by hand.
 
 ## Repository map
 

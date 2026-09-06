@@ -28,6 +28,11 @@ enum PhotoStatus {
   FAILED
 }
 
+enum AttemptKind {
+  GALLERY_PIN
+  LOGIN
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -129,15 +134,23 @@ model GalleryPhoto {
   @@index([galleryId, position])
 }
 
-// Keyed by slug rather than gallery id so attempts are recorded even for slugs
-// that do not resolve — otherwise the rate limiter would tell an attacker which
-// galleries exist.
-model PinAttempt {
-  id          String   @id @default(cuid())
-  gallerySlug String
+// Throttling state for the two unauthenticated entry points: the gallery PIN
+// and sign-in.
+//
+// `subject` is the gallery slug, or a salted hash of the email address. For the
+// PIN it is deliberately the slug rather than a gallery id foreign key, because
+// attempts against slugs that do not resolve still have to be counted —
+// otherwise the limiter would refuse to count attacks on galleries that do not
+// exist, and its behaviour would differ between real and imaginary slugs and
+// become an oracle. The same reasoning applies to unknown email addresses.
+model AccessAttempt {
+  id          String      @id @default(cuid())
+  kind        AttemptKind
+  subject     String
   ipHash      String
-  attemptedAt DateTime @default(now())
+  attemptedAt DateTime    @default(now())
   succeeded   Boolean
 
-  @@index([gallerySlug, ipHash, attemptedAt])
+  @@index([kind, subject, ipHash, attemptedAt])
+  @@index([attemptedAt])
 }

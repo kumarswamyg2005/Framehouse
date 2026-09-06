@@ -41,7 +41,9 @@ export default async function GalleryPage({ params }: { params: Promise<{ slug: 
       credit={gallery.credit}
       eventName={gallery.eventName}
       publishedAt={gallery.publishedAt ? gallery.publishedAt.toISOString() : null}
+      total={gallery.total}
       photos={gallery.photos}
+      nextCursor={gallery.nextCursor}
     />
   )
 }

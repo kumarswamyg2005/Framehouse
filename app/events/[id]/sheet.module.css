@@ -130,6 +130,34 @@
   pointer-events: none;
 }
 
+/* A frame whose thumbnail is still being generated. Same shape as the real
+   thing, so nothing shifts when it arrives. */
+.pendingFrame {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--bone) 4%, transparent) 30%,
+    color-mix(in srgb, var(--bone) 9%, transparent) 50%,
+    color-mix(in srgb, var(--bone) 4%, transparent) 70%
+  );
+  background-size: 220% 100%;
+  animation: pending-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes pending-sweep {
+  from { background-position: 180% 0; }
+  to { background-position: -80% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pendingFrame { animation: none; }
+}
+
+.frame:disabled {
+  cursor: default;
+}
+
 .frameNo {
   display: block;
   margin: 5px 0 0;

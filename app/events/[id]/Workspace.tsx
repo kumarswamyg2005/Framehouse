@@ -101,6 +101,17 @@ export function Workspace({
     [saveSelection]
   )
 
+  /**
+   * Thumbnails are generated after the confirm response returns, so a freshly
+   * uploaded frame arrives PENDING. Poll until none are, then stop — this is
+   * not a live feed, it is waiting for a job that finishes in seconds.
+   */
+  useEffect(() => {
+    if (!photos.some((photo) => photo.pending)) return
+    const timer = setInterval(() => void refreshFirstPage(), 2500)
+    return () => clearInterval(timer)
+  }, [photos, refreshFirstPage])
+
   // A pending selection change must not be lost to a tab close.
   useEffect(() => {
     function warn(event: BeforeUnloadEvent) {

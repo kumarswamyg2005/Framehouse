@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useCloseOnBack } from '@/components/useCloseOnBack'
 import styles from './gallery.module.css'
 
@@ -19,7 +19,9 @@ type Props = {
   credit: string
   eventName: string
   publishedAt: string | null
+  total: number
   photos: GalleryPhoto[]
+  nextCursor: number | null
 }
 
 const dateFormat = new Intl.DateTimeFormat('en-GB', {
@@ -28,8 +30,58 @@ const dateFormat = new Intl.DateTimeFormat('en-GB', {
   year: 'numeric',
 })
 
-export function Gallery({ slug, title, credit, eventName, publishedAt, photos }: Props) {
+export function Gallery({
+  slug,
+  title,
+  credit,
+  eventName,
+  publishedAt,
+  total,
+  photos: firstPage,
+  nextCursor: firstCursor,
+}: Props) {
   const [open, setOpen] = useState<number | null>(null)
+  const [photos, setPhotos] = useState(firstPage)
+  const [cursor, setCursor] = useState(firstCursor)
+  const [loading, setLoading] = useState(false)
+  const sentinel = useRef<HTMLDivElement | null>(null)
+
+  /**
+   * Loads the next page as the end of the sheet comes into view. A client
+   * scrolling a wedding gallery should not have to find and press a button, and
+   * IntersectionObserver costs nothing when there is nothing left to fetch.
+   */
+  useEffect(() => {
+    const node = sentinel.current
+    if (!node || cursor === null) return
+
+    const observer = new IntersectionObserver(
+      async ([entry]) => {
+        if (!entry?.isIntersecting || loading) return
+        setLoading(true)
+        try {
+          const response = await fetch(
+            `/api/public/gallery/${slug}?after=${encodeURIComponent(String(cursor))}`
+          )
+          if (response.ok) {
+            const data = (await response.json()) as {
+              photos: GalleryPhoto[]
+              nextCursor: number | null
+            }
+            setPhotos((prev) => [...prev, ...data.photos])
+            setCursor(data.nextCursor)
+          }
+        } finally {
+          setLoading(false)
+        }
+      },
+      // Start fetching before the sentinel is actually on screen.
+      { rootMargin: '800px 0px' }
+    )
+
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [cursor, loading, slug])
 
   // Presigned URLs last five minutes. Reload just before they lapse so a gallery
   // left open on a second screen does not decay into broken images.
@@ -63,7 +115,7 @@ export function Gallery({ slug, title, credit, eventName, publishedAt, photos }:
             </div>
             <div className={styles.metaRow}>
               <span className={styles.metaKey}>Frames</span>
-              <span className={styles.metaValue}>{photos.length}</span>
+              <span className={styles.metaValue}>{total}</span>
             </div>
             {publishedAt && (
               <div className={styles.metaRow}>
@@ -84,7 +136,7 @@ export function Gallery({ slug, title, credit, eventName, publishedAt, photos }:
               // held back by seconds of accumulated delay.
               style={{ animationDelay: `${Math.min(index, 24) * 20}ms` }}
               onClick={() => setOpen(index)}
-              aria-label={`Open ${photo.alt}, frame ${index + 1} of ${photos.length}`}
+              aria-label={`Open ${photo.alt}, frame ${index + 1} of ${total}`}
             >
               <img
                 src={photo.thumbnailUrl}
@@ -97,6 +149,15 @@ export function Gallery({ slug, title, credit, eventName, publishedAt, photos }:
             </button>
           ))}
         </div>
+
+        {/* Sits below the sheet; crossing into view pulls the next page. */}
+        <div ref={sentinel} aria-hidden="true" />
+
+        {cursor !== null && (
+          <p className={styles.more} role="status">
+            {loading ? 'Loading more photographs…' : `${total - photos.length} more`}
+          </p>
+        )}
 
         <footer className={styles.footer}>
           <span>Tap any photograph to view it full size.</span>

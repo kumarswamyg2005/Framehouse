@@ -6,7 +6,7 @@ import { hashSecret, verifySecret } from '@/lib/auth/hash'
 import { prisma } from '@/lib/db/prisma'
 import { ApiError, notFound } from '@/lib/http'
 import { buildGallerySlug } from '@/lib/ids'
-import { assertPinAttemptAllowed, recordPinAttempt } from '@/lib/rate-limit'
+import { clearAttempts, guardAttempt } from '@/lib/rate-limit'
 import type { publishSchema, saveSelectionSchema, verifyPinSchema } from '@/lib/schemas'
 import { presignDownload } from '@/lib/storage/r2'
 
@@ -26,8 +26,10 @@ export async function saveSelection(
 ) {
   await requireEventOwner(actor, eventId)
 
+  // Only READY photos can be selected. A PENDING frame has no thumbnail yet and
+  // a FAILED one has no bytes at all, so neither may reach a client gallery.
   const owned = await prisma.photo.findMany({
-    where: { eventId, id: { in: input.photoIds } },
+    where: { eventId, id: { in: input.photoIds }, status: 'READY' },
     select: { id: true },
   })
   const ownedIds = new Set(owned.map((p) => p.id))
@@ -140,7 +142,7 @@ export async function publishGallery(
   })
 
   // Previous failures must not count against a client after the PIN changes.
-  await prisma.pinAttempt.deleteMany({ where: { gallerySlug: gallery.slug } })
+  await clearAttempts('GALLERY_PIN', gallery.slug)
 
   return { slug: updated.slug, publishedAt: updated.publishedAt, selected }
 }
@@ -208,8 +210,6 @@ export async function verifyGalleryPin(
   ipHash: string,
   input: z.infer<typeof verifyPinSchema>
 ): Promise<{ pinVersion: number }> {
-  await assertPinAttemptAllowed(slug, ipHash)
-
   const gallery = await prisma.gallery.findFirst({
     where: publishedGalleryWhere(slug),
     select: { pinHash: true, pinVersion: true },
@@ -219,7 +219,10 @@ export async function verifyGalleryPin(
     ? await verifySecret(gallery.pinHash, input.pin)
     : await verifySecret(await DECOY_PIN_HASH, input.pin)
 
-  await recordPinAttempt(slug, ipHash, matches)
+  // Records this attempt and refuses if the allowance was already spent. It
+  // runs after the hash comparison so a locked-out client and a wrong PIN cost
+  // the same time.
+  await guardAttempt('GALLERY_PIN', slug, ipHash, matches)
 
   if (!matches || !gallery) {
     throw new ApiError('UNAUTHENTICATED', 'That PIN doesn’t match.')
@@ -248,15 +251,26 @@ export async function currentPinVersion(slug: string): Promise<number | null> {
  * The join through GalleryPhoto is the whole of invariant 8: photos that exist
  * in the event but were not selected are not in this result and have no URL.
  */
-export async function getPublicGallery(slug: string) {
+export const GALLERY_PAGE_SIZE = 36
+
+export async function getPublicGallery(
+  slug: string,
+  page: { after?: number; limit?: number } = {}
+) {
+  const limit = Math.min(Math.max(page.limit ?? GALLERY_PAGE_SIZE, 1), 120)
+
   const gallery = await prisma.gallery.findFirst({
     where: publishedGalleryWhere(slug),
     select: {
       title: true,
       publishedAt: true,
       event: { select: { name: true, owner: { select: { name: true } } } },
+      _count: { select: { photos: true } },
       photos: {
         orderBy: { position: 'asc' },
+        // One past the page, so "is there more" needs no second query.
+        take: limit + 1,
+        ...(page.after !== undefined ? { where: { position: { gt: page.after } } } : {}),
         select: {
           position: true,
           photo: {
@@ -275,8 +289,14 @@ export async function getPublicGallery(slug: string) {
   })
   if (!gallery) throw notFound('That gallery is not available.')
 
+  const hasMore = gallery.photos.length > limit
+  const rows = hasMore ? gallery.photos.slice(0, limit) : gallery.photos
+
+  // Presigning is cheap on its own — an HMAC, no network — but a 600-photo
+  // gallery signed on every page view is 600 of them for a viewer who will look
+  // at the first twelve. Paginating keeps that proportional to what is shown.
   const photos = await Promise.all(
-    gallery.photos.map(async ({ photo, position }) => ({
+    rows.map(async ({ photo, position }) => ({
       id: photo.id,
       position,
       alt: photo.originalFilename,
@@ -291,7 +311,9 @@ export async function getPublicGallery(slug: string) {
     eventName: gallery.event.name,
     credit: gallery.event.owner.name,
     publishedAt: gallery.publishedAt,
+    total: gallery._count.photos,
     photos,
+    nextCursor: hasMore ? (rows.at(-1)?.position ?? null) : null,
   }
 }
 

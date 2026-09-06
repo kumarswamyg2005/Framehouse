@@ -37,3 +37,30 @@ const slugAlphabet = customAlphabet('23456789abcdefghjkmnpqrstuvwxyz', 12)
 export function buildGallerySlug(): string {
   return slugAlphabet()
 }
+
+/**
+ * File signature sniffing.
+ *
+ * `Content-Type` is chosen by the client at presign time and storage simply
+ * records it, so it is a claim rather than evidence. Reading the first bytes of
+ * the object is the cheapest check that the claim is true, and it runs on a
+ * 32-byte ranged read rather than the whole file.
+ *
+ * This does not prove the file is a *valid* image — only that it starts like
+ * one. Full decoding happens when the thumbnail is generated, and a file that
+ * fails there is deleted and its row marked FAILED.
+ */
+export function sniffMime(head: Uint8Array): AllowedMime | null {
+  const startsWith = (...bytes: number[]) => bytes.every((b, i) => head[i] === b)
+
+  if (startsWith(0xff, 0xd8, 0xff)) return 'image/jpeg'
+  if (startsWith(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return 'image/png'
+
+  // RIFF....WEBP
+  if (startsWith(0x52, 0x49, 0x46, 0x46)) {
+    const tag = String.fromCharCode(...head.slice(8, 12))
+    if (tag === 'WEBP') return 'image/webp'
+  }
+
+  return null
+}

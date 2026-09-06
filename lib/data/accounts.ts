@@ -2,6 +2,7 @@ import { hashSecret, verifySecret } from '@/lib/auth/hash'
 import type { Actor } from '@/lib/auth/policy'
 import { prisma } from '@/lib/db/prisma'
 import { ApiError } from '@/lib/http'
+import { guardAttempt, hashSubject } from '@/lib/rate-limit'
 import type { loginSchema, registerSchema } from '@/lib/schemas'
 import type { z } from 'zod'
 
@@ -44,7 +45,19 @@ export async function registerLead(input: z.infer<typeof registerSchema>): Promi
   })
 }
 
-export async function authenticate(input: z.infer<typeof loginSchema>): Promise<Actor> {
+/**
+ * Throttled per (email, IP). argon2id already makes each guess expensive, but
+ * nothing stopped sustained credential stuffing against a known address.
+ *
+ * The email is salted-hashed before it reaches the attempts table, so throttling
+ * state cannot be read back as a list of who has an account here. Unknown
+ * addresses are counted exactly like known ones — otherwise the limiter's own
+ * behaviour would reveal which emails are real.
+ */
+export async function authenticate(
+  input: z.infer<typeof loginSchema>,
+  ipHash: string
+): Promise<Actor> {
   const user = await prisma.user.findUnique({
     where: { email: input.email },
     select: { id: true, name: true, email: true, role: true, passwordHash: true },
@@ -53,6 +66,10 @@ export async function authenticate(input: z.infer<typeof loginSchema>): Promise<
   const matches = user
     ? await verifySecret(user.passwordHash, input.password)
     : await verifySecret(await DECOY_HASH, input.password)
+
+  // After the comparison, so a locked-out request costs the same time as a
+  // wrong password and cannot be distinguished by timing.
+  await guardAttempt('LOGIN', hashSubject(input.email), ipHash, matches)
 
   if (!user || !matches) {
     // Deliberately identical for both failure modes.

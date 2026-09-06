@@ -5,7 +5,7 @@ import { handler, notFound } from '@/lib/http'
 
 type Params = { params: Promise<{ slug: string }> }
 
-export const GET = handler(async (_request: Request, { params }: Params) => {
+export const GET = handler(async (request: Request, { params }: Params) => {
   const { slug } = await params
 
   // No cookie is treated as "no such gallery", not "unauthorised" — the
@@ -15,7 +15,14 @@ export const GET = handler(async (_request: Request, { params }: Params) => {
     throw notFound('That gallery is not available.')
   }
 
-  return NextResponse.json(await getPublicGallery(slug), {
+  const params_ = new URL(request.url).searchParams
+  const rawAfter = params_.get('after')
+  const after = rawAfter === null ? undefined : Number(rawAfter)
+  if (after !== undefined && !Number.isInteger(after)) {
+    throw notFound('That gallery is not available.')
+  }
+
+  return NextResponse.json(await getPublicGallery(slug, { after }), {
     headers: { 'Cache-Control': 'no-store' },
   })
 })
