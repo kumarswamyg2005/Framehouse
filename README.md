@@ -291,6 +291,13 @@ missing account costs the same wall-clock time as a wrong password.
 takes effect on the client's next request. Nothing about publication state is
 baked into the token.
 
+**Response headers.** A Content-Security-Policy that names the storage origin
+explicitly for `img-src` and `connect-src` and nothing else, plus `nosniff`,
+`X-Frame-Options: DENY`, `frame-ancestors 'none'` (a PIN-protected gallery
+should not be embeddable), `strict-origin-when-cross-origin`, HSTS, and
+`Cache-Control: no-store` on every API response so presigned URLs never reach a
+shared cache.
+
 ---
 
 ## Running it locally
@@ -474,10 +481,12 @@ would both be better.
 
 Smaller things I am aware of: the customer gallery presigns every selected photo
 on load rather than paginating, so a 600-photo gallery does 600 signings per
-page view; there is no download-all; deleting an event leaves its objects in the
-bucket because the cascade is only in the database; and there is no email
-delivery, so a temporary password is shown once in the UI for the lead to pass
-on by hand.
+page view; the CSP still carries `'unsafe-inline'` in `style-src` because Next
+injects inline styles for fonts and CSS modules, and removing it needs nonce
+plumbing through the document; there is no download-all; deleting an event
+leaves its objects in the bucket because the cascade is only in the database;
+and there is no email delivery, so a temporary password is shown once in the UI
+for the lead to pass on by hand.
 
 ---
 
