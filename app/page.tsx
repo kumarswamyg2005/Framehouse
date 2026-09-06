@@ -109,10 +109,10 @@ export default async function Home() {
     <>
       <div className="grain" aria-hidden="true" />
 
-      <div className={styles.page}>
+      <div className={`${styles.page} darkroomSurface`}>
         <div className={styles.shell}>
           <header className={styles.bar}>
-            <span className={styles.wordmark}>Framehouse</span>
+            <span className={`${styles.wordmark} voiceQuiet`}>Framehouse</span>
             <nav className={styles.barRight}>
               <a className={styles.barLink} href="#how">
                 How it works
@@ -134,7 +134,7 @@ export default async function Home() {
                 <span className={styles.eyebrowRule} />
                 For event and wedding teams
               </p>
-              <h1 className={styles.title}>
+              <h1 className={`${styles.title} voiceDisplay`}>
                 Shoot together. Cull on one sheet.{' '}
                 <span className={styles.titleDim}>Hand over a link.</span>
               </h1>
@@ -185,7 +185,7 @@ export default async function Home() {
             <div className={`${styles.sectionHead} reveal`}>
               <p className={styles.sectionLabel}>The workflow</p>
               <div>
-                <h2 className={styles.sectionTitle}>How a shoot moves through it</h2>
+                <h2 className={`${styles.sectionTitle} voiceDisplay`}>How a shoot moves through it</h2>
                 <p className={styles.sectionNote}>
                   Three roles, one direction of travel. Every rule below is enforced in the
                   database, not in the interface — which is why you cannot get around one by
@@ -215,7 +215,7 @@ export default async function Home() {
               <div className={`${styles.sectionHead} reveal`}>
                 <p className={styles.sectionLabel}>Demo access</p>
                 <div>
-                  <h2 className={styles.sectionTitle}>Sign in as any of them</h2>
+                  <h2 className={`${styles.sectionTitle} voiceDisplay`}>Sign in as any of them</h2>
                   <p className={styles.sectionNote}>
                     This deployment is seeded with a fictional wedding — {gallery._count.photos}{' '}
                     photographs selected out of thirty. The same event looks completely different
@@ -298,7 +298,7 @@ export default async function Home() {
             <div className={`${styles.sectionHead} reveal`}>
               <p className={styles.sectionLabel}>Engineering</p>
               <div>
-                <h2 className={styles.sectionTitle}>Built so the photographs stay private</h2>
+                <h2 className={`${styles.sectionTitle} voiceDisplay`}>Built so the photographs stay private</h2>
                 <p className={styles.sectionNote}>
                   Next.js 15 on the App Router, TypeScript in strict mode, PostgreSQL through
                   Prisma, and a private Cloudflare R2 bucket. Authentication is a custom JWT path

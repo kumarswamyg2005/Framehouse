@@ -102,7 +102,7 @@
   height: 100%;
   object-fit: cover;
   opacity: 0.88;
-  transition: opacity 120ms ease;
+  transition: opacity var(--dur-micro) var(--ease-out);
 }
 
 .frame:hover img,
@@ -133,7 +133,7 @@
 .frameNo {
   display: block;
   margin: 5px 0 0;
-  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   color: var(--bone-dim);
@@ -162,7 +162,7 @@
 }
 
 .hintKey {
-  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
   color: var(--bone);
 }
 
@@ -193,7 +193,7 @@
   padding: 34px 20px;
   text-align: center;
   margin: 24px 0 0;
-  transition: border-color 120ms ease, background-color 120ms ease;
+  transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out);
 }
 
 .dropzoneActive {
@@ -254,7 +254,7 @@
 .barFill {
   height: 100%;
   background: var(--ok);
-  transition: width 160ms linear;
+  transition: width var(--dur-micro) linear;
 }
 
 .queueList {

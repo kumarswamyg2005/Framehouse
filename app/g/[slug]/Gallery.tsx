@@ -38,7 +38,7 @@ export function Gallery({ slug, title, credit, eventName, publishedAt, photos }:
   }, [])
 
   return (
-    <div className={styles.gallerySurface}>
+    <div className="gallerySurface">
       <div className={styles.paperGrain} aria-hidden="true" />
 
       <div className={styles.content}>
@@ -48,7 +48,7 @@ export function Gallery({ slug, title, credit, eventName, publishedAt, photos }:
               <span className={styles.kickerRule} />
               Your gallery
             </p>
-            <h1 className={styles.title}>{title}</h1>
+            <h1 className={`${styles.title} voiceDisplay`}>{title}</h1>
           </div>
 
           <div className={styles.meta}>

@@ -47,7 +47,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
 
         <div className={styles.head}>
           <div>
-            <h1 className={styles.title}>{event.name}</h1>
+            <h1 className={`${styles.title} voiceQuiet`}>{event.name}</h1>
             <p className={styles.meta}>
               {event.date ? dateFormat.format(event.date) : 'No date set'}
               {isLead && (gallery?.isPublished ? ' · Gallery published' : ' · Draft')}

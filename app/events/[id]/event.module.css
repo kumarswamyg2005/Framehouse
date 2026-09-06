@@ -28,7 +28,7 @@
 }
 
 .title {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: 44px;
   line-height: 1.05;
   letter-spacing: -0.015em;
@@ -189,7 +189,7 @@
 }
 
 .credentialValue {
-  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 13px;
   color: var(--bone);
   user-select: all;

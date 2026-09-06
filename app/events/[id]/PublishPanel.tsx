@@ -97,7 +97,7 @@ export function PublishPanel({
   if (gallery?.isPublished) {
     return (
       <div className={styles.panel}>
-        <h2 className={styles.panelTitle}>{gallery.title}</h2>
+        <h2 className={`${styles.panelTitle} voiceQuiet`}>{gallery.title}</h2>
         <p className={styles.panelNote}>
           Published with {selectedCount} {selectedCount === 1 ? 'photo' : 'photos'}. Send the client
           the link and the PIN separately.
@@ -140,7 +140,7 @@ export function PublishPanel({
 
   return (
     <div className={styles.panel}>
-      <h2 className={styles.panelTitle}>Publish to a client gallery</h2>
+      <h2 className={`${styles.panelTitle} voiceQuiet`}>Publish to a client gallery</h2>
       <p className={styles.panelNote}>
         Publish {selectedCount} {selectedCount === 1 ? 'photo' : 'photos'} to a client gallery? You
         can unpublish anytime.

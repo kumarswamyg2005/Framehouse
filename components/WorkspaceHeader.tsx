@@ -6,7 +6,7 @@ import styles from './WorkspaceHeader.module.css'
 export function WorkspaceHeader({ actor }: { actor: Actor }) {
   return (
     <header className={styles.bar}>
-      <Link href="/events" className={styles.wordmark}>
+      <Link href="/events" className={`${styles.wordmark} voiceQuiet`}>
         Framehouse
       </Link>
       <div className={styles.right}>

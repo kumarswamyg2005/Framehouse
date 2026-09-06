@@ -15,7 +15,7 @@
 }
 
 .title {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: 44px;
   line-height: 1.05;
   letter-spacing: -0.015em;
@@ -48,7 +48,7 @@
   padding: 22px 4px 24px;
   text-decoration: none;
   opacity: 0.88;
-  transition: opacity 120ms ease;
+  transition: opacity var(--dur-micro) var(--ease-out);
 }
 
 .rowLink:hover {
@@ -56,7 +56,7 @@
 }
 
 .eventName {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: 28px;
   line-height: 1.15;
   color: var(--bone);

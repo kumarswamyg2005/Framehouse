@@ -1,13 +1,6 @@
 /* The client gallery — a print-viewing surface. Light, generous, near-zero
    chrome. The photographs are the only loud thing here. */
 
-.gallerySurface {
-  position: relative;
-  min-height: 100dvh;
-  background: var(--paper);
-  color: var(--graphite);
-}
-
 /* Grain on paper reads as paper stock rather than film, and keeps the flat
    field from looking like a screenshot of nothing. */
 .paperGrain {
@@ -36,7 +29,7 @@
 }
 
 .gateBrand {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: 18px;
   color: var(--graphite);
   opacity: 0.55;
@@ -61,7 +54,7 @@
 }
 
 .gateTitle {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: var(--display-2);
   line-height: 1.02;
   letter-spacing: -0.02em;
@@ -89,10 +82,10 @@
   border: 1px solid transparent;
   border-radius: 3px;
   color: var(--graphite);
-  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 20px;
-  transition: border-color 180ms var(--ease), background-color 180ms var(--ease),
-    transform 180ms var(--ease);
+  transition: border-color var(--dur-ui) var(--ease-out), background-color var(--dur-ui) var(--ease-out),
+    transform var(--dur-ui) var(--ease-out);
 }
 
 .pinBox:hover:not(:disabled) {
@@ -115,7 +108,7 @@
 }
 
 .shake {
-  animation: shake 150ms ease-in-out;
+  animation: shake var(--dur-micro) var(--ease-in-out);
 }
 
 @keyframes shake {
@@ -178,7 +171,7 @@
 }
 
 .title {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: var(--display-1);
   line-height: 0.98;
   letter-spacing: -0.024em;
@@ -234,7 +227,7 @@
   border-radius: 2px;
   background: var(--paper-shade);
   /* One orchestrated moment: the grid arrives on unlock, staggered. */
-  animation: rise 460ms var(--ease) both;
+  animation: rise 420ms var(--ease-out) both;
 }
 
 @keyframes rise {
@@ -250,7 +243,7 @@
   width: 100%;
   height: auto;
   display: block;
-  transition: transform 700ms var(--ease), filter 400ms var(--ease);
+  transition: transform 520ms var(--ease-out), filter 420ms var(--ease-out);
 }
 
 /* The only hover in the gallery: the photograph itself comes forward slightly
@@ -303,7 +296,7 @@
   grid-template-rows: auto 1fr auto;
   background: rgb(27 27 25 / 0.975);
   backdrop-filter: blur(4px);
-  animation: lb-in 240ms var(--ease) both;
+  animation: lb-in var(--dur-overlay) var(--ease-out-expo) both;
 }
 
 @keyframes lb-in {
@@ -340,7 +333,7 @@
   max-height: 100%;
   object-fit: contain;
   border-radius: 2px;
-  animation: lb-img 340ms var(--ease) both;
+  animation: lb-img var(--dur-overlay) var(--ease-out-expo) both;
 }
 
 @keyframes lb-img {
@@ -361,7 +354,7 @@
 }
 
 .counter {
-  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   color: color-mix(in srgb, var(--paper) 62%, transparent);
@@ -381,7 +374,7 @@
   color: var(--paper);
   cursor: pointer;
   text-decoration: none;
-  transition: border-color 200ms var(--ease), background-color 200ms var(--ease);
+  transition: border-color var(--dur-ui) var(--ease-out), background-color var(--dur-ui) var(--ease-out);
 }
 
 .lbButton:hover:not(:disabled) {

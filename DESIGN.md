@@ -10,30 +10,46 @@ The **client gallery** is a print-viewing surface. Light, generous, near-zero ch
 
 Vernacular borrowed from the darkroom and the contact sheet: frame numbers, selection marks, the loupe.
 
-## Tokens
+## Surfaces
 
-Workspace:
-- `--ink: #12161C`        base (cool slate, not tinted black)
+**Revised.** There were two surfaces. There are now three, and the difference between them is temperature, because temperature is what tells you which room you are standing in.
+
+**Darkroom — warm dark.** The entry page and sign-in. A darkroom is warm; this is the room you stand in before the work starts.
+
+- `--dr-ground: #15110F`   warm near-black
+- `--dr-raised: #1E1815`   panels
+- `--dr-line: #302722`     1px separators
+- `--dr-ink: #EDE7DF`      warm bone
+- `--dr-ink-dim: #9C9089`
+
+**Workspace — cool neutral dark.** The tool. This one is not a mood: **you cannot judge exposure or white balance against a warm ground.** Every serious editor is neutral grey for the same reason. If the tool and the marketing page shared a palette, one of them would be wrong.
+
+- `--ink: #12161C`        cool slate, not tinted black
 - `--ink-raised: #1A2029` panels
 - `--ink-line: #2A3340`   1px separators
 - `--bone: #E8E6E1`       primary text
 - `--bone-dim: #8B93A0`   secondary
-- `--safelight: #C4553B`  selection mark only — one accent, one job
+- `--safelight: #C4553B`  selection mark and focus only — one accent, one job
 - `--ok: #6E8F6B`         upload success
 
-Gallery:
-- `--paper: #F2F2EF`
-- `--paper-shade: #E4E3DE`
-- `--graphite: #1B1B19`
-- `--graphite-dim: #6C6C66`
+**Paper — warm light.** The client gallery. Prints are looked at on paper, and bone beats pure white.
+
+- `--paper: #F4F1EA`
+- `--paper-shade: #E6E1D6`
+- `--graphite: #1A1815`
+- `--graphite-dim: #6B655C`
+
+Component CSS keeps using the generic `--ink` / `--bone` names; each surface remaps those to its own values, so one stylesheet serves all three. The surface classes are **global, never CSS-module** — a module class is hashed at build time, so `body:has(.gallerySurface)` would silently never match.
 
 ## Type
 
-- Display: **Instrument Serif** — event names, gallery titles. Large, tight leading, never bolded.
-- UI/body: **Inter** — 400/500 only. No 700 anywhere.
-- Frame numbers only: **Roboto Mono** 400, 11px, `--bone-dim`. Justified because film edges literally carry stenciled frame counters; do not use mono for any other label.
+**Revised.** Instrument Serif was the wrong display face: single weight, high contrast, and thin rather than authoritative at size.
 
-Scale: 12 / 14 / 16 / 20 / 28 / 44. Sentence case everywhere. No all-caps.
+- Display: **Fraunces**. Variable across optical size, weight, `SOFT` (rounding) and `WONK` (irregularity), so one family gives two voices — `voiceQuiet` (`SOFT 0, WONK 0, opsz 36`) inside the tool, `voiceDisplay` (`SOFT 24, WONK 1, opsz 110`) on the entry page and gallery titles. It is drawn from 1970s phototypesetting, which is the same era the rest of this vocabulary comes from.
+- UI/body: **Instrument Sans**. More drawn quality than Inter without giving up the neutrality dense UI needs.
+- Frame numbers and literal copyable values only: **JetBrains Mono**, 400. Justified because film edges carry stenciled frame counters; do not use mono for any other label.
+
+Scale: 12 / 14 / 16 / 20 / 28 / 44, plus two display steps (`--display-1`, `--display-2`) for the entry page and gallery titles only. Sentence case everywhere. No all-caps.
 
 ## Layout
 
@@ -68,7 +84,16 @@ PIN gate:
 
 ## Motion
 
-**Revised.** The original rule — one orchestrated moment, no scroll-triggered reveals — was written for the tool and is kept there. It was wrong for the entry page and the client gallery, which are presentation surfaces and were reading as flat.
+**Revised twice.** Durations and curves are now tokens, so no component invents its own:
+
+- `--dur-micro: 120ms` · `--dur-ui: 200ms` · `--dur-overlay: 260ms` · `--dur-exit: 160ms`
+- `--ease-out` (quart) for entrances · `--ease-out-expo` for overlays · `--ease-in-out` for on-screen movement
+
+Exits run at roughly 80% of the matching entrance — leaving should not be savoured. `ease-in` and `linear` are deliberately absent from the token set: `ease-in` starts slow and reads sluggish, `linear` reads mechanical. The one exception is the upload progress bar, where linear is correct because it is reporting a real rate.
+
+Only `transform` and `opacity` are ever animated. Never `width`, `height`, `margin` or `padding` — those force layout.
+
+The original rule — one orchestrated moment, no scroll-triggered reveals — was written for the tool and is kept there. It was wrong for the entry page and the client gallery, which are presentation surfaces and were reading as flat.
 
 The rule now splits by surface.
 

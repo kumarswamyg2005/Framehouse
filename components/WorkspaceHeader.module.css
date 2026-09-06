@@ -8,7 +8,7 @@
 }
 
 .wordmark {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: 20px;
   line-height: 1;
   color: var(--bone);

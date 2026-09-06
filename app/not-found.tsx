@@ -16,7 +16,7 @@ export default function NotFound() {
       <div style={{ maxWidth: '44ch' }}>
         <h1
           style={{
-            fontFamily: 'var(--font-instrument-serif), Georgia, serif',
+            fontFamily: 'var(--font-display), Georgia, serif',
             fontSize: 44,
             lineHeight: 1.05,
             color: 'var(--bone)',

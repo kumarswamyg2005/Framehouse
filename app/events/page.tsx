@@ -29,7 +29,7 @@ export default async function EventsPage() {
 
         <div className={styles.head}>
           <div>
-            <h1 className={styles.title}>Events</h1>
+            <h1 className={`${styles.title} voiceQuiet`}>Events</h1>
             <p className={styles.subtitle}>
               {isLead
                 ? 'Events you lead. Add your team, review their frames, publish a gallery.'

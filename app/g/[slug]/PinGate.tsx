@@ -74,16 +74,16 @@ export function PinGate({ slug }: { slug: string }) {
   }
 
   return (
-    <div className={styles.gallerySurface}>
+    <div className="gallerySurface">
       <div className={styles.paperGrain} aria-hidden="true" />
 
       <div className={styles.gate}>
-        <span className={styles.gateBrand}>Framehouse</span>
+        <span className={`${styles.gateBrand} voiceQuiet`}>Framehouse</span>
 
         <div className={styles.gateMiddle}>
           <div className={styles.gateInner}>
             <div className={styles.gateMark} />
-            <h1 className={styles.gateTitle}>Your photographs are ready</h1>
+            <h1 className={`${styles.gateTitle} voiceDisplay`}>Your photographs are ready</h1>
             <p className={styles.gateNote}>
               Enter the six-digit PIN your photographer sent you.
             </p>

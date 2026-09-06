@@ -73,12 +73,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
     <>
       <div className="grain" aria-hidden="true" />
 
-      <main className={styles.shell}>
+      <main className={`${styles.shell} darkroomSurface`}>
         <div className={styles.rail}>
           <Link href="/" className={styles.home}>
             ← Framehouse
           </Link>
-          <h1 className={styles.wordmark}>
+          <h1 className={`${styles.wordmark} voiceDisplay`}>
             {mode === 'login' ? 'Sign in' : 'Create a workspace'}
           </h1>
           <p className={styles.tagline}>{copy.tagline}</p>

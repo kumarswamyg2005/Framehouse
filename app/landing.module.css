@@ -27,7 +27,7 @@
   background: color-mix(in srgb, var(--ink) 82%, transparent);
   backdrop-filter: blur(14px) saturate(140%);
   border-bottom: 1px solid transparent;
-  transition: border-color 300ms var(--ease);
+  transition: border-color var(--dur-overlay) var(--ease-out-expo);
 }
 
 /* The rule only appears once the page has moved, so the top of the document
@@ -49,7 +49,7 @@
 }
 
 .wordmark {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: 20px;
   line-height: 1;
   color: var(--bone);
@@ -66,7 +66,7 @@
   font-size: 12px;
   color: var(--bone-dim);
   text-decoration: none;
-  transition: color 160ms var(--ease);
+  transition: color var(--dur-micro) var(--ease-out);
 }
 
 .barLink:hover {
@@ -109,7 +109,7 @@
 }
 
 .title {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: var(--display-1);
   line-height: 1.0;
   letter-spacing: -0.022em;
@@ -145,8 +145,8 @@
   padding: 13px 20px;
   font-size: 14px;
   text-decoration: none;
-  transition: transform 200ms var(--ease), opacity 200ms var(--ease),
-    border-color 200ms var(--ease), color 200ms var(--ease);
+  transition: transform var(--dur-ui) var(--ease-out), opacity var(--dur-ui) var(--ease-out),
+    border-color var(--dur-ui) var(--ease-out), color var(--dur-ui) var(--ease-out);
 }
 
 .solid {
@@ -174,7 +174,7 @@
 }
 
 .arrow {
-  transition: transform 220ms var(--ease);
+  transition: transform var(--dur-ui) var(--ease-out);
 }
 
 .solid:hover .arrow,
@@ -215,7 +215,7 @@
   background: var(--ink-raised);
   border: 1px solid color-mix(in srgb, var(--ink-line) 80%, transparent);
   opacity: 0;
-  animation: develop 760ms var(--ease) both;
+  animation: develop 520ms var(--ease-out) both;
 }
 
 /* A print coming up in the tray: it arrives, it does not slide in. */
@@ -257,7 +257,7 @@
 .frameNo {
   display: block;
   margin-top: 4px;
-  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 9px;
   font-variant-numeric: tabular-nums;
   color: var(--bone-dim);
@@ -311,7 +311,7 @@
 }
 
 .sectionTitle {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: var(--display-2);
   line-height: 1.02;
   letter-spacing: -0.02em;
@@ -350,11 +350,11 @@
 }
 
 .stepNumeral {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: 44px;
   line-height: 0.8;
   color: var(--ink-line);
-  transition: color 400ms var(--ease);
+  transition: color 420ms var(--ease-out);
 }
 
 .step:hover .stepNumeral {
@@ -426,7 +426,7 @@
   align-items: baseline;
   padding: 15px 26px;
   border-bottom: 1px solid color-mix(in srgb, var(--ink-line) 60%, transparent);
-  transition: background-color 200ms var(--ease);
+  transition: background-color var(--dur-ui) var(--ease-out);
 }
 
 .row:last-child {
@@ -453,7 +453,7 @@
 /* Mono is reserved for frame numbers and for literal values a person copies or
    types. Never for labels. */
 .value {
-  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 12.5px;
   color: var(--bone-dim);
   user-select: all;
@@ -472,7 +472,7 @@
   color: var(--bone);
   text-decoration: none;
   box-shadow: inset 0 -1px 0 var(--ink-line);
-  transition: box-shadow 200ms var(--ease);
+  transition: box-shadow var(--dur-ui) var(--ease-out);
 }
 
 .galleryLink:hover {
@@ -503,7 +503,7 @@
 }
 
 .factIndex {
-  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   color: var(--bone-dim);
