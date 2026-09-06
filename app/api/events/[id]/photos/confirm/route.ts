@@ -11,5 +11,22 @@ export const POST = handler(async (request: Request, { params }: Params) => {
   const { id } = await params
   const input = await parseBody(request, confirmUploadSchema)
   const photo = await confirmPhotoUpload(actor, id, input)
-  return NextResponse.json({ photo: { id: photo.id, filename: photo.originalFilename } }, { status: 201 })
+
+  // Enough for the contact sheet to render the new frame immediately. There is
+  // no thumbnail yet — finalisation runs after this response — so the sheet
+  // shows a placeholder and polls this id until it resolves.
+  return NextResponse.json(
+    {
+      photo: {
+        id: photo.id,
+        filename: photo.originalFilename,
+        width: photo.width,
+        height: photo.height,
+        uploadedBy: { id: actor.id, name: actor.name },
+        pending: photo.status === 'PENDING',
+        thumbnailUrl: null,
+      },
+    },
+    { status: 201 }
+  )
 })

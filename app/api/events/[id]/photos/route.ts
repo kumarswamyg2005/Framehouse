@@ -10,9 +10,11 @@ export const GET = handler(async (request: Request, { params }: Params) => {
   const actor = await requireActor()
   const { id } = await params
   const url = new URL(request.url)
+  const rawIds = url.searchParams.get('ids')
   const input = listPhotosSchema.parse({
     cursor: url.searchParams.get('cursor') ?? undefined,
     limit: url.searchParams.get('limit') ?? undefined,
+    ids: rawIds ? rawIds.split(',').filter(Boolean) : undefined,
   })
   return NextResponse.json(await listPhotos(actor, id, input))
 })

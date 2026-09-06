@@ -65,9 +65,8 @@ export function clientIp(request: Request): string {
 async function countAndRecord(
   kind: AttemptKind,
   subject: string,
-  ipHash: string,
-  succeeded: boolean
-): Promise<{ failures: number; oldest: Date | null }> {
+  ipHash: string
+): Promise<{ failures: number; oldest: Date | null; attemptId: string }> {
   const { windowMs, maxFailures } = POLICY[kind]
   const lockKey = `${kind}:${subject}:${ipHash}`
 
@@ -82,9 +81,17 @@ async function countAndRecord(
       take: maxFailures,
     })
 
-    await tx.accessAttempt.create({ data: { kind, subject, ipHash, succeeded } })
+    // Recorded as a failure; the caller promotes it if the secret checks out.
+    const attempt = await tx.accessAttempt.create({
+      data: { kind, subject, ipHash, succeeded: false },
+      select: { id: true },
+    })
 
-    return { failures: failures.length, oldest: failures[0]?.attemptedAt ?? null }
+    return {
+      failures: failures.length,
+      oldest: failures[0]?.attemptedAt ?? null,
+      attemptId: attempt.id,
+    }
   })
 }
 
@@ -99,18 +106,32 @@ function refuse(kind: AttemptKind, oldest: Date): never {
 }
 
 /**
- * Records the attempt and throws RATE_LIMITED if this client had already used up
- * its allowance before making it. Recording happens either way, so an attempt
- * made while locked out extends nothing but is still visible in the table.
+ * Claims one attempt against the allowance, before any expensive work happens.
+ *
+ * The attempt is written as a failure up front and the count is read in the same
+ * locked transaction, so the check and the record cannot be separated by a
+ * concurrent request. The caller does the costly comparison afterwards and calls
+ * `markAttemptSucceeded` if it worked — only failures count toward the limit, so
+ * a successful sign-in leaves nothing behind.
+ *
+ * Ordering matters: this used to run *after* the argon2id comparison, which
+ * meant a locked-out client still forced a 19 MB hash on every request. The
+ * limiter has to shed load on the expensive path, not behind it. Returning fast
+ * here leaks nothing, because a 429 announces the lockout explicitly anyway.
  */
-export async function guardAttempt(
+export async function claimAttempt(
   kind: AttemptKind,
   subject: string,
-  ipHash: string,
-  succeeded: boolean
-): Promise<void> {
-  const { failures, oldest } = await countAndRecord(kind, subject, ipHash, succeeded)
+  ipHash: string
+): Promise<{ attemptId: string }> {
+  const { failures, oldest, attemptId } = await countAndRecord(kind, subject, ipHash)
   if (failures >= POLICY[kind].maxFailures && oldest) refuse(kind, oldest)
+  return { attemptId }
+}
+
+/** Turns a claimed attempt into a success, so it stops counting. */
+export async function markAttemptSucceeded(attemptId: string): Promise<void> {
+  await prisma.accessAttempt.update({ where: { id: attemptId }, data: { succeeded: true } })
 }
 
 /** Clears the record for one subject — used when a lead sets a new gallery PIN. */

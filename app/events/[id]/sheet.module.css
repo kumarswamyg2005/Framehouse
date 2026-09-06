@@ -154,7 +154,7 @@
   .pendingFrame { animation: none; }
 }
 
-.frame:disabled {
+.frame[aria-disabled='true'] {
   cursor: default;
 }
 

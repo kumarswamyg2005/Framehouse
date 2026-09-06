@@ -20,7 +20,14 @@ import {
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
-process.loadEnvFile('.env')
+// On a CI or Vercel host the environment is already populated and there is no
+// .env file; loadEnvFile throws ENOENT rather than no-opping, which would crash
+// this script exactly where it is meant to be useful.
+try {
+  process.loadEnvFile('.env')
+} catch {
+  // No .env — expected anywhere the environment is injected.
+}
 
 let failures = 0
 const pass = (m) => console.log(`  ok    ${m}`)
@@ -82,7 +89,15 @@ try {
     SELECT migration_name FROM "_prisma_migrations" WHERE finished_at IS NOT NULL`
   pass(`${applied.length} migration(s) applied`)
 
-  const tables = ['User', 'Event', 'Photo', 'Gallery', 'GalleryPhoto', 'AccessAttempt']
+  const tables = [
+    'User',
+    'Event',
+    'EventMember',
+    'Photo',
+    'Gallery',
+    'GalleryPhoto',
+    'AccessAttempt',
+  ]
   for (const t of tables) {
     await prisma.$queryRawUnsafe(`SELECT 1 FROM "${t}" LIMIT 1`)
   }
@@ -129,15 +144,41 @@ try {
   if (viaSigned.ok) pass('presigned read')
   else fail(`presigned read returned ${viaSigned.status}`)
 
-  // The invariant the whole design rests on: without a signature, nothing.
+  // An unsigned read of the S3 API endpoint. This catches an S3 or MinIO bucket
+  // policy that allows anonymous GET.
+  //
+  // It does NOT prove a Cloudflare R2 bucket is private. R2 serves public
+  // objects from a separate pub-<hash>.r2.dev origin (or a custom domain), and
+  // the S3 API endpoint rejects unsigned requests unconditionally whether or not
+  // public access is switched on — so on R2 this assertion would pass either
+  // way. Set R2_PUBLIC_PROBE_URL to the r2.dev or custom-domain URL of any
+  // object to actually test it.
   const unsigned = signed.split('?')[0]
   const viaPublic = await fetch(unsigned)
   if (viaPublic.ok) {
-    fail(`BUCKET IS PUBLICLY READABLE — ${unsigned} returned ${viaPublic.status}`)
-    fail('  disable public access before deploying; every photo would be world-readable')
+    fail(`S3 endpoint served an unsigned read (${viaPublic.status}) at ${unsigned}`)
+    fail('  a bucket policy is allowing anonymous GET — every photo is world-readable')
   } else {
-    pass(`unsigned read refused (${viaPublic.status}) — bucket is private`)
+    pass(`S3 endpoint refused an unsigned read (${viaPublic.status})`)
   }
+
+  const publicProbe = process.env.R2_PUBLIC_PROBE_URL
+  if (publicProbe) {
+    const res = await fetch(publicProbe)
+    if (res.ok) {
+      fail(`BUCKET IS PUBLICLY READABLE — ${publicProbe} returned ${res.status}`)
+      fail('  turn off public access in the R2 dashboard before deploying')
+    } else {
+      pass(`public origin refused the read (${res.status})`)
+    }
+  } else if (endpoint.includes('r2.cloudflarestorage.com')) {
+    warn('R2 public access NOT verified by this script — the S3 endpoint always')
+    warn('  refuses unsigned reads, so the check above cannot detect it.')
+    warn('  Confirm in the R2 dashboard that Public Development URL is disabled')
+    warn('  and no custom domain is attached, or set R2_PUBLIC_PROBE_URL and')
+    warn('  re-run to have this asserted.')
+  }
+
 } catch (error) {
   fail(`storage: ${error.message.split('\n')[0]}`)
 } finally {

@@ -121,7 +121,8 @@ export async function confirmPhotoUpload(
   })
 
   // The row is already durable, so a crash in here leaves a PENDING photo to
-  // retry rather than losing the upload.
+  // retry rather than losing the upload. afterResponse never rejects into the
+  // request; finalisePhoto handles its own failures.
   await afterResponse(() => finalisePhoto(photo.id))
 
   return photo
@@ -169,10 +170,25 @@ export async function finalisePhoto(photoId: string): Promise<void> {
     })
   } catch (error) {
     console.error('[photos] could not finalise', { photoId, error })
-    // Not a usable image. Drop the bytes and mark the row, so the uploader sees
-    // a failure instead of a frame stuck on PENDING forever.
-    await deleteObjects([photo.storageKey]).catch(() => {})
-    await prisma.photo.update({ where: { id: photo.id }, data: { status: 'FAILED' } })
+
+    // Mark the row first, then drop the bytes. If the delete fails we are left
+    // with an unreferenced object, which a sweep can clean up; if the update
+    // failed after a successful delete we would be left with a PENDING row
+    // pointing at nothing, and the contact sheet would poll it forever.
+    //
+    // Nothing here may throw: this runs inside after(), where a rejection is
+    // unhandled and takes the process reporting with it.
+    try {
+      await prisma.photo.update({ where: { id: photo.id }, data: { status: 'FAILED' } })
+    } catch (updateError) {
+      console.error('[photos] could not mark FAILED', { photoId, updateError })
+    }
+    await deleteObjects([photo.storageKey]).catch((deleteError: unknown) => {
+      console.error('[photos] could not delete orphaned object', {
+        key: photo.storageKey,
+        deleteError,
+      })
+    })
   }
 }
 
@@ -201,12 +217,21 @@ export async function listPhotos(
 ) {
   await requireEventAccess(actor, eventId)
 
+  // `ids` fetches specific rows rather than a page. The contact sheet uses it to
+  // refresh the frames that are still being processed, without disturbing the
+  // pages it has already scrolled through.
+  const byIds = input.ids && input.ids.length > 0
+
   const rows = await prisma.photo.findMany({
     // FAILED rows are bytes that never decoded; their objects are already gone.
-    where: { ...visiblePhotoWhere(actor, eventId), status: { not: 'FAILED' } },
+    where: {
+      ...visiblePhotoWhere(actor, eventId),
+      status: { not: 'FAILED' },
+      ...(byIds ? { id: { in: input.ids } } : {}),
+    },
     orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-    take: input.limit + 1,
-    ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
+    take: byIds ? input.ids!.length : input.limit + 1,
+    ...(!byIds && input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
     select: {
       id: true,
       originalFilename: true,
@@ -220,7 +245,7 @@ export async function listPhotos(
     },
   })
 
-  const hasMore = rows.length > input.limit
+  const hasMore = !byIds && rows.length > input.limit
   const page = hasMore ? rows.slice(0, input.limit) : rows
 
   // One presigned URL per frame, minted after the scoping above — never a

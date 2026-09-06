@@ -376,3 +376,29 @@ describe('gallery pagination', () => {
     await expectApiError(getPublicPhotoUrl(slug, unselected.id), 'NOT_FOUND')
   })
 })
+
+describe('gallery cursor parsing', () => {
+  // Number('') === 0, which would be read as position > 0 and silently drop the
+  // first photograph, positions being zero-based.
+  it('treats position 0 as the true first page', async () => {
+    const admin = await makeUser('ADMIN')
+    const member = await makeUser('MEMBER')
+    const event = await makeEvent(admin, [member])
+    const photos = []
+    for (let i = 0; i < 3; i++) photos.push(await makePhoto(event.id, member))
+
+    const saved = await saveSelection(admin, event.id, {
+      title: 'Small',
+      photoIds: photos.map((p) => p.id),
+    })
+    const { slug } = await publishGallery(admin, saved.id, { pin: PIN })
+
+    const all = await getPublicGallery(slug)
+    expect(all.photos).toHaveLength(3)
+    expect(all.photos[0]!.position).toBe(0)
+
+    // Paging after position 0 must drop exactly one photograph, not zero.
+    const after0 = await getPublicGallery(slug, { after: 0 })
+    expect(after0.photos.map((p) => p.position)).toEqual([1, 2])
+  })
+})

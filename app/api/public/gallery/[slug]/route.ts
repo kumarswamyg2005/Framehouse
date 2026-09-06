@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { hasGalleryAccess } from '@/lib/auth/session'
 import { currentPinVersion, getPublicGallery } from '@/lib/data/gallery'
-import { handler, notFound } from '@/lib/http'
+import { ApiError, handler, notFound } from '@/lib/http'
 
 type Params = { params: Promise<{ slug: string }> }
 
@@ -15,11 +15,16 @@ export const GET = handler(async (request: Request, { params }: Params) => {
     throw notFound('That gallery is not available.')
   }
 
-  const params_ = new URL(request.url).searchParams
-  const rawAfter = params_.get('after')
-  const after = rawAfter === null ? undefined : Number(rawAfter)
-  if (after !== undefined && !Number.isInteger(after)) {
-    throw notFound('That gallery is not available.')
+  // Strict, because Number('') is 0 and Number(' ') is 0 — either would be
+  // read as `position > 0` and silently drop the first photograph, positions
+  // being zero-based. '0x10' and '-5' would slip through Number.isInteger too.
+  const rawAfter = new URL(request.url).searchParams.get('after')
+  let after: number | undefined
+  if (rawAfter !== null) {
+    if (!/^\d{1,9}$/.test(rawAfter)) {
+      throw new ApiError('VALIDATION_ERROR', 'That page reference is not valid.')
+    }
+    after = Number(rawAfter)
   }
 
   return NextResponse.json(await getPublicGallery(slug, { after }), {

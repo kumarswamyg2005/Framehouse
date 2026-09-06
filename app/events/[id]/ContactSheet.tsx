@@ -171,14 +171,22 @@ export function ContactSheet({
                       : `${photo.filename}, frame ${index + 1}`
                 }
                 onFocus={() => setFocusIndex(index)}
-                disabled={photo.pending}
+                // aria-disabled, not disabled: a disabled button is removed
+                // from the focus order, so arrow-key navigation would move
+                // focusIndex past it while the visible focus ring stayed behind,
+                // and Space would then act on a different frame than the one
+                // that looks focused.
+                aria-disabled={photo.pending || undefined}
                 onClick={(event) => {
+                  if (photo.pending) return
                   if (!canSelect) return setLoupeIndex(index)
                   if (event.shiftKey) return selectRange(index)
                   lastToggled.current = index
                   toggle(photo.id)
                 }}
-                onDoubleClick={() => setLoupeIndex(index)}
+                onDoubleClick={() => {
+                  if (!photo.pending) setLoupeIndex(index)
+                }}
               >
                 {/* Thumbnails are presigned R2 URLs, never public ones. */}
                 {photo.thumbnailUrl ? (

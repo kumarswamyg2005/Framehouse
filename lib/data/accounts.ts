@@ -2,7 +2,7 @@ import { hashSecret, verifySecret } from '@/lib/auth/hash'
 import type { Actor } from '@/lib/auth/policy'
 import { prisma } from '@/lib/db/prisma'
 import { ApiError } from '@/lib/http'
-import { guardAttempt, hashSubject } from '@/lib/rate-limit'
+import { claimAttempt, hashSubject, markAttemptSucceeded } from '@/lib/rate-limit'
 import type { loginSchema, registerSchema } from '@/lib/schemas'
 import type { z } from 'zod'
 
@@ -58,6 +58,10 @@ export async function authenticate(
   input: z.infer<typeof loginSchema>,
   ipHash: string
 ): Promise<Actor> {
+  // Claimed before the argon2id comparison, so a locked-out client is refused
+  // without costing a 19 MB hash.
+  const { attemptId } = await claimAttempt('LOGIN', hashSubject(input.email), ipHash)
+
   const user = await prisma.user.findUnique({
     where: { email: input.email },
     select: { id: true, name: true, email: true, role: true, passwordHash: true },
@@ -67,14 +71,13 @@ export async function authenticate(
     ? await verifySecret(user.passwordHash, input.password)
     : await verifySecret(await DECOY_HASH, input.password)
 
-  // After the comparison, so a locked-out request costs the same time as a
-  // wrong password and cannot be distinguished by timing.
-  await guardAttempt('LOGIN', hashSubject(input.email), ipHash, matches)
-
   if (!user || !matches) {
     // Deliberately identical for both failure modes.
     throw new ApiError('UNAUTHENTICATED', 'That email and password don\u2019t match.')
   }
+
+  // Only failures count toward the limit.
+  await markAttemptSucceeded(attemptId)
 
   const { passwordHash: _passwordHash, ...actor } = user
   return actor

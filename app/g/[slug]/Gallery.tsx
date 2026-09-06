@@ -43,8 +43,11 @@ export function Gallery({
   const [open, setOpen] = useState<number | null>(null)
   const [photos, setPhotos] = useState(firstPage)
   const [cursor, setCursor] = useState(firstCursor)
-  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
   const sentinel = useRef<HTMLDivElement | null>(null)
+  // A ref, not state: the observer must not be rebuilt when this flips, or a
+  // still-intersecting sentinel would immediately fire again.
+  const loading = useRef(false)
 
   /**
    * Loads the next page as the end of the sheet comes into view. A client
@@ -57,22 +60,32 @@ export function Gallery({
 
     const observer = new IntersectionObserver(
       async ([entry]) => {
-        if (!entry?.isIntersecting || loading) return
-        setLoading(true)
+        if (!entry?.isIntersecting || loading.current) return
+        loading.current = true
         try {
           const response = await fetch(
             `/api/public/gallery/${slug}?after=${encodeURIComponent(String(cursor))}`
           )
-          if (response.ok) {
-            const data = (await response.json()) as {
-              photos: GalleryPhoto[]
-              nextCursor: number | null
-            }
-            setPhotos((prev) => [...prev, ...data.photos])
-            setCursor(data.nextCursor)
+          if (!response.ok) {
+            // Stop. Leaving the cursor as it was would re-arm the observer
+            // against a sentinel that is still on screen and retry forever —
+            // which is exactly what happens when the two-hour gallery token
+            // expires with the tab left open.
+            setError(true)
+            setCursor(null)
+            return
           }
+          const data = (await response.json()) as {
+            photos: GalleryPhoto[]
+            nextCursor: number | null
+          }
+          setPhotos((prev) => [...prev, ...data.photos])
+          setCursor(data.nextCursor)
+        } catch {
+          setError(true)
+          setCursor(null)
         } finally {
-          setLoading(false)
+          loading.current = false
         }
       },
       // Start fetching before the sentinel is actually on screen.
@@ -81,7 +94,7 @@ export function Gallery({
 
     observer.observe(node)
     return () => observer.disconnect()
-  }, [cursor, loading, slug])
+  }, [cursor, slug])
 
   // Presigned URLs last five minutes. Reload just before they lapse so a gallery
   // left open on a second screen does not decay into broken images.
@@ -153,10 +166,23 @@ export function Gallery({
         {/* Sits below the sheet; crossing into view pulls the next page. */}
         <div ref={sentinel} aria-hidden="true" />
 
-        {cursor !== null && (
+        {error ? (
           <p className={styles.more} role="status">
-            {loading ? 'Loading more photographs…' : `${total - photos.length} more`}
+            The rest of this gallery could not be loaded.{' '}
+            <button
+              type="button"
+              className={styles.retry}
+              onClick={() => window.location.reload()}
+            >
+              Reload
+            </button>
           </p>
+        ) : (
+          cursor !== null && (
+            <p className={styles.more} role="status">
+              Loading {total - photos.length} more…
+            </p>
+          )
         )}
 
         <footer className={styles.footer}>

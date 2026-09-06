@@ -6,7 +6,7 @@ import { hashSecret, verifySecret } from '@/lib/auth/hash'
 import { prisma } from '@/lib/db/prisma'
 import { ApiError, notFound } from '@/lib/http'
 import { buildGallerySlug } from '@/lib/ids'
-import { clearAttempts, guardAttempt } from '@/lib/rate-limit'
+import { claimAttempt, clearAttempts, markAttemptSucceeded } from '@/lib/rate-limit'
 import type { publishSchema, saveSelectionSchema, verifyPinSchema } from '@/lib/schemas'
 import { presignDownload } from '@/lib/storage/r2'
 
@@ -210,6 +210,10 @@ export async function verifyGalleryPin(
   ipHash: string,
   input: z.infer<typeof verifyPinSchema>
 ): Promise<{ pinVersion: number }> {
+  // Claimed before the argon2id comparison, so a locked-out client is refused
+  // without costing a 19 MB hash.
+  const { attemptId } = await claimAttempt('GALLERY_PIN', slug, ipHash)
+
   const gallery = await prisma.gallery.findFirst({
     where: publishedGalleryWhere(slug),
     select: { pinHash: true, pinVersion: true },
@@ -219,15 +223,12 @@ export async function verifyGalleryPin(
     ? await verifySecret(gallery.pinHash, input.pin)
     : await verifySecret(await DECOY_PIN_HASH, input.pin)
 
-  // Records this attempt and refuses if the allowance was already spent. It
-  // runs after the hash comparison so a locked-out client and a wrong PIN cost
-  // the same time.
-  await guardAttempt('GALLERY_PIN', slug, ipHash, matches)
-
   if (!matches || !gallery) {
     throw new ApiError('UNAUTHENTICATED', 'That PIN doesn’t match.')
   }
 
+  // Only failures count toward the limit.
+  await markAttemptSucceeded(attemptId)
   return { pinVersion: gallery.pinVersion }
 }
 

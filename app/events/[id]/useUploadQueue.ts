@@ -23,6 +23,17 @@ export type UploadItem = {
   error?: string
 }
 
+/** What `confirm` hands back — enough for the sheet to render the new frame. */
+export type ConfirmedPhoto = {
+  id: string
+  filename: string
+  width: number | null
+  height: number | null
+  uploadedBy: { id: string; name: string }
+  pending: boolean
+  thumbnailUrl: string | null
+}
+
 const CONCURRENCY = 3
 const MAX_BYTES = 25 * 1024 * 1024
 const ACCEPTED = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -43,7 +54,7 @@ async function readError(response: Response, fallback: string): Promise<string> 
   return payload?.error?.message ?? fallback
 }
 
-export function useUploadQueue(eventId: string, onUploaded: () => void) {
+export function useUploadQueue(eventId: string, onUploaded: (photo: ConfirmedPhoto) => void) {
   const [items, setItems] = useState<UploadItem[]>([])
   const running = useRef(0)
   const pending = useRef<string[]>([])
@@ -115,8 +126,10 @@ export function useUploadQueue(eventId: string, onUploaded: () => void) {
           throw new Error(await readError(confirmResponse, 'The upload could not be confirmed.'))
         }
 
+        const { photo } = (await confirmResponse.json()) as { photo: ConfirmedPhoto }
+
         patch(id, { status: 'ready' })
-        onUploaded()
+        onUploaded(photo)
       } catch (error) {
         patch(id, {
           status: 'failed',

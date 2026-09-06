@@ -79,6 +79,8 @@ export const confirmUploadSchema = z.object({
 export const listPhotosSchema = z.object({
   cursor: z.string().min(1).max(64).optional(),
   limit: z.coerce.number().int().min(1).max(120).default(60),
+  // Refresh specific frames instead of a page — used while thumbnails finish.
+  ids: z.array(z.string().min(1).max(64)).max(120).optional(),
 })
 
 /* --- galleries ---------------------------------------------------------- */

@@ -51,14 +51,39 @@ export function Workspace({
     setTimeout(() => setToast(null), 2600)
   }, [])
 
-  /** Re-reads the first page after an upload so new frames appear in order. */
-  const refreshFirstPage = useCallback(async () => {
-    const response = await fetch(`/api/events/${eventId}/photos`)
-    if (!response.ok) return
-    const data = (await response.json()) as { photos: SheetPhoto[]; nextCursor: string | null }
-    setPhotos(data.photos)
-    setCursor(data.nextCursor)
-  }, [eventId])
+  /**
+   * Appends a freshly confirmed frame.
+   *
+   * Frames are ordered oldest-first, so a new upload belongs at the end — which
+   * is also why this cannot re-read "the first page": on an event with more than
+   * one page, the new frame is not on it, and replacing state that way would
+   * also throw away every page the lead had already scrolled.
+   */
+  const onUploaded = useCallback((photo: SheetPhoto) => {
+    setPhotos((prev) => (prev.some((p) => p.id === photo.id) ? prev : [...prev, photo]))
+  }, [])
+
+  /** Patches specific frames in place, leaving loaded pages alone. */
+  const refreshPhotos = useCallback(
+    async (ids: string[]) => {
+      if (ids.length === 0) return
+      const response = await fetch(
+        `/api/events/${eventId}/photos?ids=${ids.map(encodeURIComponent).join(',')}`
+      )
+      if (!response.ok) return
+      const data = (await response.json()) as { photos: SheetPhoto[] }
+      const patched = new Map(data.photos.map((p) => [p.id, p]))
+      // Ids we asked about that came back missing were rejected during
+      // finalisation; drop them rather than polling them forever.
+      const returned = new Set(data.photos.map((p) => p.id))
+      setPhotos((prev) =>
+        prev
+          .filter((p) => returned.has(p.id) || !ids.includes(p.id))
+          .map((p) => patched.get(p.id) ?? p)
+      )
+    },
+    [eventId]
+  )
 
   const saveSelection = useCallback(
     async (ids: string[]) => {
@@ -103,14 +128,21 @@ export function Workspace({
 
   /**
    * Thumbnails are generated after the confirm response returns, so a freshly
-   * uploaded frame arrives PENDING. Poll until none are, then stop — this is
-   * not a live feed, it is waiting for a job that finishes in seconds.
+   * uploaded frame arrives PENDING. Poll only those frames until none are left,
+   * then stop — this is not a live feed, it is waiting for a job that finishes
+   * in seconds.
    */
+  const pendingIds = photos.filter((p) => p.pending).map((p) => p.id)
+  const pendingKey = pendingIds.join(',')
+
   useEffect(() => {
-    if (!photos.some((photo) => photo.pending)) return
-    const timer = setInterval(() => void refreshFirstPage(), 2500)
+    if (!pendingKey) return
+    const ids = pendingKey.split(',')
+    const timer = setInterval(() => void refreshPhotos(ids), 2500)
     return () => clearInterval(timer)
-  }, [photos, refreshFirstPage])
+    // Keyed on the id list rather than the photos array, so the interval is not
+    // torn down and rebuilt on every unrelated state change.
+  }, [pendingKey, refreshPhotos])
 
   // A pending selection change must not be lost to a tab close.
   useEffect(() => {
@@ -191,7 +223,7 @@ export function Workspace({
         />
       )}
 
-      <Uploader eventId={eventId} hasPhotos={photos.length > 0} onUploaded={refreshFirstPage} />
+      <Uploader eventId={eventId} hasPhotos={photos.length > 0} onUploaded={onUploaded} />
 
       {photos.length === 0 ? (
         <p className={sheet.empty}>

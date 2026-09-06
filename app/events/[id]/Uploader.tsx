@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { useUploadQueue, type UploadItem } from './useUploadQueue'
+import { useUploadQueue, type ConfirmedPhoto, type UploadItem } from './useUploadQueue'
 import styles from './sheet.module.css'
 
 const STATE_LABEL: Record<UploadItem['status'], string> = {
@@ -20,7 +20,7 @@ export function Uploader({
 }: {
   eventId: string
   hasPhotos: boolean
-  onUploaded: () => void
+  onUploaded: (photo: ConfirmedPhoto) => void
 }) {
   const { items, add, retry, clearFinished, active, failed, done, overall } = useUploadQueue(
     eventId,
