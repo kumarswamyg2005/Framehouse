@@ -149,7 +149,9 @@ test('lead publishes a gallery and a customer opens it with the PIN', async ({ b
 
   // --- unpublishing revokes the customer's existing session -------------
   await lead.getByRole('button', { name: 'Unpublish' }).click()
-  await expect(lead.getByText('Unpublished. The link no longer opens.')).toBeVisible()
+  // The badge, not the toast: a toast is transient by design, so asserting on
+  // one is a race. The badge is what a lead comes back to the page and reads.
+  await expect(lead.getByLabel('Gallery draft')).toBeVisible()
 
   await customer.reload()
   await expect(customer.getByText('Enter the six-digit PIN your photographer sent you.')).toBeVisible()

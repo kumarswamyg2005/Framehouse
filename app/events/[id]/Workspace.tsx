@@ -46,9 +46,20 @@ export function Workspace({
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dirty = useRef(false)
 
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  /**
+   * Holds the dismiss timer in a ref so a second toast within the window cannot
+   * be cut short by the first one's timeout still being in flight — which is
+   * what happened when a publish was followed quickly by an unpublish.
+   */
   const showToast = useCallback((message: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
     setToast(message)
-    setTimeout(() => setToast(null), 2600)
+    toastTimer.current = setTimeout(() => {
+      setToast(null)
+      toastTimer.current = null
+    }, 3200)
   }, [])
 
   /**
