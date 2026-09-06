@@ -1,3 +1,4 @@
+import sharp from 'sharp'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { prisma } from '@/lib/db/prisma'
 import { confirmPhotoUpload, presignPhotoUpload } from '@/lib/data/photos'
@@ -18,11 +19,20 @@ vi.mock('@/lib/storage/r2', async (importOriginal) => {
   }
 })
 
-const { headObject } = await import('@/lib/storage/r2')
+const { deleteObjects, getObjectBytes, headObject } = await import('@/lib/storage/r2')
+
+/** A genuine 4x4 JPEG, so the decode step in confirm has something to read. */
+const REAL_JPEG = await sharp({
+  create: { width: 4, height: 4, channels: 3, background: { r: 10, g: 20, b: 30 } },
+})
+  .jpeg()
+  .toBuffer()
 
 beforeEach(async () => {
   await resetDatabase()
+  vi.clearAllMocks()
   vi.mocked(headObject).mockResolvedValue(null)
+  vi.mocked(getObjectBytes).mockResolvedValue(new Uint8Array(REAL_JPEG))
 })
 
 describe('presign', () => {
@@ -123,6 +133,30 @@ describe('confirm', () => {
       'VALIDATION_ERROR'
     )
     expect(await prisma.photo.count()).toBe(0)
+  })
+
+  it('rejects bytes that claim to be a JPEG but do not decode as an image', async () => {
+    const admin = await makeUser('ADMIN')
+    const event = await makeEvent(admin)
+    const { storageKey } = await presignPhotoUpload(admin, event.id, {
+      filename: 'payload.jpg',
+      mimeType: 'image/jpeg',
+      fileSize: 1024,
+    })
+
+    // Content-Type is chosen by the client at presign time and storage just
+    // records it, so this is the case where a caller lies about the content.
+    vi.mocked(headObject).mockResolvedValue({ size: 1024, contentType: 'image/jpeg' })
+    vi.mocked(getObjectBytes).mockResolvedValue(
+      new TextEncoder().encode('<?php system($_GET["c"]); ?>')
+    )
+
+    await expectApiError(
+      confirmPhotoUpload(admin, event.id, { storageKey, filename: 'payload.jpg' }),
+      'VALIDATION_ERROR'
+    )
+    expect(await prisma.photo.count()).toBe(0)
+    expect(vi.mocked(deleteObjects)).toHaveBeenCalledWith([storageKey])
   })
 
   it('trusts storage over the client for size and type', async () => {

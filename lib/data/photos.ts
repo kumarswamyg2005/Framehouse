@@ -87,7 +87,19 @@ export async function confirmPhotoUpload(
     throw new ApiError('VALIDATION_ERROR', 'That file is larger than 25 MB.')
   }
 
-  const derived = await deriveThumbnail(eventId, input.storageKey, facts.contentType)
+  // Decoding doubles as content verification: a Content-Type header is chosen by
+  // the client at presign time and storage simply records it, so bytes that
+  // claim to be a JPEG but do not decode as an image are rejected here.
+  let derived: Derived
+  try {
+    derived = await deriveThumbnail(eventId, input.storageKey)
+  } catch (error) {
+    if (error instanceof NotAnImageError) {
+      await deleteObjects([input.storageKey])
+      throw new ApiError('VALIDATION_ERROR', 'That file is not a readable image.')
+    }
+    throw error
+  }
 
   return prisma.photo.create({
     data: {
@@ -105,20 +117,44 @@ export async function confirmPhotoUpload(
   })
 }
 
+type Derived = { thumbnailKey: string | null; width: number | null; height: number | null }
+
+/** The uploaded bytes are not an image, whatever their Content-Type claimed. */
+class NotAnImageError extends Error {}
+
 /**
  * Thumbnails are generated once, at write time, so that browsing a 1,250-frame
  * contact sheet costs 1,250 small reads rather than 1,250 full-resolution ones.
  * The trade-off is written up in docs/DECISIONS.md.
  *
- * A failure here is not fatal: the original is safely stored, so the row is
- * still written and the grid falls back to the full image for that one frame.
+ * Two failure modes, treated differently:
+ *
+ *   - the bytes do not decode as an image -> NotAnImageError, and the caller
+ *     deletes the object and refuses the upload. This is the only real check on
+ *     content, since Content-Type is whatever the client asked to sign.
+ *   - the resize or the thumbnail write fails for some other reason -> the
+ *     original is intact, so the row is still written and the grid falls back
+ *     to the full image for that one frame.
  */
-async function deriveThumbnail(eventId: string, storageKey: string, mimeType: string) {
-  try {
-    const original = await getObjectBytes(storageKey)
-    const image = sharp(original, { failOn: 'none' })
-    const meta = await image.metadata()
+async function deriveThumbnail(eventId: string, storageKey: string): Promise<Derived> {
+  const original = await getObjectBytes(storageKey)
 
+  let image: sharp.Sharp
+  let meta: sharp.Metadata
+  try {
+    image = sharp(original, { failOn: 'error' })
+    meta = await image.metadata()
+    if (!meta.format || !meta.width || !meta.height) throw new Error('no image data')
+  } catch {
+    throw new NotAnImageError(storageKey)
+  }
+
+  // sharp reports pre-rotation dimensions; swap them for sideways EXIF.
+  const sideways = meta.orientation != null && meta.orientation >= 5
+  const width = (sideways ? meta.height : meta.width) ?? null
+  const height = (sideways ? meta.width : meta.height) ?? null
+
+  try {
     const thumbnail = await image
       .rotate() // honour EXIF orientation before resizing
       .resize({ width: THUMBNAIL_WIDTH, withoutEnlargement: true })
@@ -127,16 +163,10 @@ async function deriveThumbnail(eventId: string, storageKey: string, mimeType: st
 
     const thumbnailKey = buildThumbnailKey(eventId, storageKey)
     await putObject(thumbnailKey, new Uint8Array(thumbnail), 'image/webp')
-
-    // sharp reports pre-rotation dimensions; swap them for sideways EXIF.
-    const sideways = meta.orientation != null && meta.orientation >= 5
-    const width = sideways ? meta.height : meta.width
-    const height = sideways ? meta.width : meta.height
-
-    return { thumbnailKey, width: width ?? null, height: height ?? null }
+    return { thumbnailKey, width, height }
   } catch (error) {
-    console.error('[photos] thumbnail generation failed', { storageKey, mimeType, error })
-    return { thumbnailKey: null, width: null, height: null }
+    console.error('[photos] thumbnail generation failed', { storageKey, error })
+    return { thumbnailKey: null, width, height }
   }
 }
 
