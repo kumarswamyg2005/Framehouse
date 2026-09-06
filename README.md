@@ -406,6 +406,7 @@ SEED_GALLERY_PIN="482917"
 | `npm run db:migrate` | Create a migration from a schema change |
 | `npm run db:deploy` | Apply committed migrations |
 | `npm run db:seed` | Reseed the demo workspace |
+| `npm run preflight` | Check env, database and storage before a deploy — including that the bucket refuses an unsigned read |
 
 ---
 
@@ -482,12 +483,12 @@ Write for that bucket. Then add a CORS policy so the browser can PUT directly:
 **Application — Vercel.** Import the repository, set every variable from the
 table above, and deploy. `npm run build` runs `prisma generate` first.
 
-**After the first deploy**, seed the demo data by pointing a local checkout at
-the production database and running `npm run db:seed`. Then remove the `SEED_*`
-variables.
+**Full runbook, including the CORS policy, the seeding step and a smoke-test
+checklist: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).**
 
-**Smoke test:** open the app in a private window, sign in as each of the three
-demo accounts, upload one file, publish, and open the gallery link on a phone.
+Before and after deploying, run `npm run preflight`. It verifies the
+environment, that the database is reachable and migrated, and that an unsigned
+read of a stored object is refused — the invariant everything else rests on.
 
 ---
 
@@ -559,5 +560,7 @@ tests/
 docs/
   ARCHITECTURE.md            how a request flows, and why the layers are here
   DECISIONS.md               six ADRs
+  DEPLOYMENT.md              runbook, CORS policy, smoke test, failure modes
+  INTERVIEW.md               my own prep notes, not a deliverable
 DESIGN.md                    the design system this UI is built to
 ```

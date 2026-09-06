@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "db:reset": "prisma migrate reset --force",
     "storage:init": "node scripts/create-buckets.mjs",
-    "setup": "docker compose up -d && npm run db:deploy && npm run storage:init && npm run db:seed"
+    "setup": "docker compose up -d && npm run db:deploy && npm run storage:init && npm run db:seed",
+    "preflight": "node scripts/preflight.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
