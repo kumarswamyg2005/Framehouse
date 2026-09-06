@@ -17,8 +17,16 @@ export const GET = handler(async (request: Request, { params }: Params) => {
   const { slug, photoId } = await params
   if (!(await hasGalleryAccess(slug))) throw notFound('That gallery is not available.')
 
-  const download = new URL(request.url).searchParams.get('download') === '1'
-  return NextResponse.json(await getPublicPhotoUrl(slug, photoId, download), {
-    headers: { 'Cache-Control': 'no-store' },
-  })
+  const params_ = new URL(request.url).searchParams
+  const download = params_.get('download') === '1'
+  const result = await getPublicPhotoUrl(slug, photoId, download)
+
+  // A browser navigating here (the gallery's Download control) wants the file,
+  // not JSON. Both branches ran the same authorization first, and the redirect
+  // target is the same short-lived presigned URL the JSON would have carried.
+  if (params_.get('redirect') === '1') {
+    return NextResponse.redirect(result.url, { headers: { 'Cache-Control': 'no-store' } })
+  }
+
+  return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } })
 })

@@ -22,7 +22,7 @@ export default async function GalleryPage({ params }: { params: Promise<{ slug: 
    * to enumerate galleries.
    */
   if (!(await hasGalleryAccess(slug))) {
-    return <PinGate slug={slug} title="Your gallery" />
+    return <PinGate slug={slug} />
   }
 
   // Re-read live, so unpublishing revokes an already-issued cookie.
@@ -30,7 +30,7 @@ export default async function GalleryPage({ params }: { params: Promise<{ slug: 
   try {
     gallery = await getPublicGallery(slug)
   } catch {
-    return <PinGate slug={slug} title="Your gallery" />
+    return <PinGate slug={slug} />
   }
 
   return (
@@ -38,6 +38,8 @@ export default async function GalleryPage({ params }: { params: Promise<{ slug: 
       slug={slug}
       title={gallery.title}
       credit={gallery.credit}
+      eventName={gallery.eventName}
+      publishedAt={gallery.publishedAt ? gallery.publishedAt.toISOString() : null}
       photos={gallery.photos}
     />
   )

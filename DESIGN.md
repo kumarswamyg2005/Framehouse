@@ -68,7 +68,31 @@ PIN gate:
 
 ## Motion
 
-One orchestrated moment only: on gallery unlock, the grid fades in over 400ms with a 20ms stagger. Everywhere else, motion only answers a click — upload progress, selection toggle, lightbox open. No scroll-triggered reveals.
+**Revised.** The original rule — one orchestrated moment, no scroll-triggered reveals — was written for the tool and is kept there. It was wrong for the entry page and the client gallery, which are presentation surfaces and were reading as flat.
+
+The rule now splits by surface.
+
+**Workspace (the tool).** Unchanged, and deliberately so. Motion only answers a click: upload progress, selection toggle, loupe open. Nothing moves because you scrolled past it. A person culling 1,250 frames does not want the interface performing.
+
+**Entry page and client gallery (presentation).** Motion is allowed to direct attention, under three constraints:
+
+- It is a *camera move*, not decoration. Every reveal has somewhere it is taking the eye. If a sequence would read the same with the animation deleted, delete the animation.
+- It is compositor-only — `transform` and `opacity`, driven by native `animation-timeline: view()`, never a scroll event listener. Target is 60fps on a mid-range Android under 4× CPU throttle.
+- It is progressive enhancement. Content is visible and correct with no animation at all; the animation is applied inside `@supports (animation-timeline: view())`. A browser without it loses nothing but the choreography.
+
+`prefers-reduced-motion` is a designed path, not a switched-off one: reveals resolve instantly to their final state, and the gallery unlock still reads as an arrival through opacity alone.
+
+## Texture
+
+The workspace and the gallery both carry a film grain overlay — an SVG `feTurbulence` at low opacity, fixed to the viewport, `pointer-events: none`.
+
+This is not a decorative flourish borrowed from a trend. Grain is the native texture of the subject: it is what film actually looks like, it is what the darkroom vernacular in this design points at, and on large flat fields of `--ink` it does real work — it breaks up banding and stops the dark ground reading as dead black. It sits under the photographs and never over them.
+
+## Scale, revised
+
+The body scale is unchanged: 12 / 14 / 16 / 20 / 28 / 44.
+
+The entry page and the gallery title get two display steps above it — `clamp()` between 44 and 128 — because a hero set at 44px is not a hero, and expressive display type is the single strongest lever a page like that has. Inside the tool, 44 remains the ceiling.
 
 ## Copy
 
@@ -80,4 +104,6 @@ One orchestrated moment only: on gallery unlock, the grid fades in over 400ms wi
 
 ## Quality floor
 
-Responsive to 360px. Visible focus rings (`--safelight` 2px offset). `prefers-reduced-motion` honored. All images have alt text from the original filename. Contrast ≥ 4.5:1 on all text.
+Responsive to 360px. Visible focus rings (`--safelight` 2px offset). `prefers-reduced-motion` honored as a designed path. All images have alt text from the original filename. Contrast ≥ 4.5:1 on all text.
+
+Every asynchronous surface has a designed loading state — a skeleton that matches the shape of what is arriving, never a spinner and never a layout shift when the content lands.

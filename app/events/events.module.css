@@ -1,4 +1,6 @@
 .page {
+  position: relative;
+  z-index: 2;
   max-width: 880px;
   margin: 0 auto;
   padding: 0 24px 96px;

@@ -34,45 +34,50 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
   ])
 
   return (
-    <div className={styles.page}>
-      <WorkspaceHeader actor={actor} />
+    <>
+      {/* Film grain: see the note in app/globals.css. */}
+      <div className="grain" aria-hidden="true" />
 
-      <Link href="/events" className={styles.back}>
-        ← All events
-      </Link>
+      <div className={styles.page}>
+        <WorkspaceHeader actor={actor} />
 
-      <div className={styles.head}>
-        <div>
-          <h1 className={styles.title}>{event.name}</h1>
-          <p className={styles.meta}>
-            {event.date ? dateFormat.format(event.date) : 'No date set'}
-            {isLead && (gallery?.isPublished ? ' · Gallery published' : ' · Draft')}
-          </p>
-          {event.description && <p className={styles.description}>{event.description}</p>}
+        <Link href="/events" className={styles.back}>
+          ← All events
+        </Link>
+
+        <div className={styles.head}>
+          <div>
+            <h1 className={styles.title}>{event.name}</h1>
+            <p className={styles.meta}>
+              {event.date ? dateFormat.format(event.date) : 'No date set'}
+              {isLead && (gallery?.isPublished ? ' · Gallery published' : ' · Draft')}
+            </p>
+            {event.description && <p className={styles.description}>{event.description}</p>}
+          </div>
         </div>
+
+        <Workspace
+          eventId={event.id}
+          eventName={event.name}
+          isLead={isLead}
+          appUrl={process.env.NEXT_PUBLIC_APP_URL ?? ''}
+          initialPhotos={firstPage.photos}
+          initialCursor={firstPage.nextCursor}
+          initialGallery={
+            gallery
+              ? {
+                  id: gallery.id,
+                  slug: gallery.slug,
+                  title: gallery.title,
+                  isPublished: gallery.isPublished,
+                }
+              : null
+          }
+          initialSelectedIds={gallery?.selectedIds ?? []}
+        />
+
+        {isLead && <TeamRoster eventId={event.id} members={members} />}
       </div>
-
-      <Workspace
-        eventId={event.id}
-        eventName={event.name}
-        isLead={isLead}
-        appUrl={process.env.NEXT_PUBLIC_APP_URL ?? ''}
-        initialPhotos={firstPage.photos}
-        initialCursor={firstPage.nextCursor}
-        initialGallery={
-          gallery
-            ? {
-                id: gallery.id,
-                slug: gallery.slug,
-                title: gallery.title,
-                isPublished: gallery.isPublished,
-              }
-            : null
-        }
-        initialSelectedIds={gallery?.selectedIds ?? []}
-      />
-
-      {isLead && <TeamRoster eventId={event.id} members={members} />}
-    </div>
+    </>
   )
 }

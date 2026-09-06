@@ -1,34 +1,103 @@
 .shell {
+  position: relative;
   min-height: 100dvh;
+  max-width: 1120px;
+  margin: 0 auto;
   display: grid;
-  place-items: center;
-  padding: 32px 20px;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  align-items: center;
+  gap: clamp(32px, 5vw, 72px);
+  padding: 40px clamp(20px, 5vw, 40px);
 }
 
-.column {
-  width: 100%;
-  max-width: 348px;
+/* --- left rail ------------------------------------------------------------ */
+
+.rail {
+  align-self: center;
+  max-width: 30ch;
+}
+
+.home {
+  display: inline-block;
+  margin-bottom: 26px;
+  font-size: 12px;
+  color: var(--bone-dim);
+  text-decoration: none;
+  transition: color 160ms var(--ease);
+}
+
+.home:hover {
+  color: var(--bone);
 }
 
 .wordmark {
   font-family: var(--font-instrument-serif), Georgia, serif;
-  font-size: 44px;
+  font-size: var(--display-2);
   line-height: 1;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.02em;
   color: var(--bone);
 }
 
 .tagline {
-  margin: 10px 0 0;
-  font-size: 14px;
+  margin: 18px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--bone-dim);
 }
 
-.rule {
-  height: 1px;
-  background: var(--ink-line);
-  margin: 28px 0;
-  border: 0;
+/* A strip of empty frames, same idea as the entry page: there is nothing to
+   show until someone is authorized. */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 3px;
+  margin-top: 34px;
+  max-width: 290px;
+}
+
+.stripFrame {
+  aspect-ratio: 3 / 2;
+  background: var(--ink-raised);
+  border: 1px solid color-mix(in srgb, var(--ink-line) 75%, transparent);
+  opacity: 0;
+  animation: develop 700ms var(--ease) both;
+}
+
+.stripFrameMarked {
+  border-color: var(--safelight);
+  background: color-mix(in srgb, var(--safelight) 9%, var(--ink-raised));
+}
+
+@keyframes develop {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stripFrame { animation: none; opacity: 1; }
+}
+
+/* --- form ----------------------------------------------------------------- */
+
+.panel {
+  width: 100%;
+  max-width: 400px;
+  padding: clamp(26px, 3vw, 36px);
+  background: color-mix(in srgb, var(--ink-raised) 70%, transparent);
+  border: 1px solid var(--ink-line);
+  border-radius: 3px;
+}
+
+.panelTitle {
+  font-size: 20px;
+  color: var(--bone);
+  margin: 0 0 6px;
+}
+
+.panelNote {
+  margin: 0 0 26px;
+  font-size: 14px;
+  color: var(--bone-dim);
 }
 
 .field {
@@ -45,22 +114,26 @@
 
 .input {
   width: 100%;
-  padding: 11px 12px;
-  background: var(--ink-raised);
+  padding: 12px 13px;
+  background: var(--ink);
   border: 1px solid var(--ink-line);
   border-radius: 2px;
   color: var(--bone);
   font-size: 16px; /* 16px avoids the iOS zoom-on-focus jump */
-  transition: border-color 120ms ease;
+  transition: border-color 180ms var(--ease), background-color 180ms var(--ease);
 }
 
 .input::placeholder {
   color: var(--bone-dim);
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .input:hover:not(:disabled) {
   border-color: #38424f;
+}
+
+.input:focus {
+  border-color: color-mix(in srgb, var(--bone) 40%, transparent);
 }
 
 .input[aria-invalid='true'] {
@@ -68,7 +141,7 @@
 }
 
 .input:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .hint {
@@ -78,18 +151,29 @@
 }
 
 /* Errors are carried by text and motion, never by colour — the one accent in
-   this system is reserved for selection marks. See DESIGN.md. */
+   this system is reserved for selection marks and focus. See DESIGN.md. */
 .error {
   margin: 0 0 18px;
   padding-left: 11px;
   border-left: 1px solid var(--bone);
   font-size: 14px;
   color: var(--bone);
+  animation: nudge 180ms var(--ease);
+}
+
+@keyframes nudge {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-4px); }
+  70% { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error { animation: none; }
 }
 
 .submit {
   width: 100%;
-  padding: 12px;
+  padding: 13px;
   background: var(--bone);
   color: var(--ink);
   border: 1px solid var(--bone);
@@ -97,20 +181,22 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: opacity 120ms ease;
+  transition: opacity 180ms var(--ease), transform 180ms var(--ease);
 }
 
 .submit:hover:not(:disabled) {
-  opacity: 0.88;
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .submit:disabled {
   opacity: 0.5;
   cursor: default;
+  transform: none;
 }
 
 .footer {
-  margin: 24px 0 0;
+  margin: 22px 0 0;
   font-size: 14px;
   color: var(--bone-dim);
 }
@@ -118,10 +204,26 @@
 .footer a {
   color: var(--bone);
   text-decoration: none;
-  border-bottom: 1px solid var(--ink-line);
-  padding-bottom: 1px;
+  box-shadow: inset 0 -1px 0 var(--ink-line);
 }
 
 .footer a:hover {
-  border-bottom-color: var(--bone-dim);
+  box-shadow: inset 0 -1px 0 var(--bone-dim);
+}
+
+@media (max-width: 880px) {
+  .shell {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    align-content: center;
+    gap: 40px;
+  }
+
+  .strip {
+    display: none;
+  }
+
+  .panel {
+    max-width: 100%;
+  }
 }

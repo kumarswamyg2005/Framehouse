@@ -113,7 +113,7 @@ test('lead publishes a gallery and a customer opens it with the PIN', async ({ b
   const customer = await customerContext.newPage()
 
   await customer.goto(shareUrl)
-  await expect(customer.getByText('Enter the six-digit PIN from your photographer.')).toBeVisible()
+  await expect(customer.getByText('Enter the six-digit PIN your photographer sent you.')).toBeVisible()
 
   // A wrong PIN says nothing about whether the gallery exists.
   const gateBoxes = customer.locator('input[aria-label^="Digit"]')
@@ -126,7 +126,8 @@ test('lead publishes a gallery and a customer opens it with the PIN', async ({ b
   await expect(customer.getByRole('button', { name: /^Open / })).toHaveCount(SELECT_COUNT, {
     timeout: 20_000,
   })
-  await expect(customer.getByText(`${SELECT_COUNT} photos`)).toBeVisible()
+  // The metadata rail states the count independently of the grid.
+  await expect(customer.getByText('Frames', { exact: true })).toBeVisible()
 
   // The lightbox fetches the full-resolution original through the gallery path.
   await customer.getByRole('button', { name: /^Open / }).first().click()
@@ -138,7 +139,7 @@ test('lead publishes a gallery and a customer opens it with the PIN', async ({ b
   await expect(lead.getByText('Unpublished. The link no longer opens.')).toBeVisible()
 
   await customer.reload()
-  await expect(customer.getByText('Enter the six-digit PIN from your photographer.')).toBeVisible()
+  await expect(customer.getByText('Enter the six-digit PIN your photographer sent you.')).toBeVisible()
 
   await leadContext.close()
   await memberContext.close()

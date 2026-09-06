@@ -1,18 +1,51 @@
-/* The entry page. Type-only, deliberately: see the note in page.tsx. */
+/* Entry page.
+   Editorial composition: an asymmetric 12-column grid, a display headline that
+   crosses the contact sheet behind it, hairline rules instead of boxes. */
 
 .page {
-  max-width: 940px;
-  margin: 0 auto;
-  padding: 0 24px 96px;
+  position: relative;
+  z-index: 2;
 }
 
+.shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 4vw, 56px);
+}
+
+/* --- top bar -------------------------------------------------------------- */
+
 .bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-  padding: 18px 0 17px;
-  border-bottom: 1px solid var(--ink-line);
+  padding: 20px 0 18px;
+  background: color-mix(in srgb, var(--ink) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid transparent;
+  transition: border-color 300ms var(--ease);
+}
+
+/* The rule only appears once the page has moved, so the top of the document
+   reads as one uninterrupted field. */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .bar {
+      animation: bar-settle linear both;
+      animation-timeline: scroll();
+      animation-range: 0 120px;
+    }
+  }
+}
+
+@keyframes bar-settle {
+  to {
+    border-bottom-color: var(--ink-line);
+  }
 }
 
 .wordmark {
@@ -20,37 +53,79 @@
   font-size: 20px;
   line-height: 1;
   color: var(--bone);
+  letter-spacing: -0.01em;
+}
+
+.barRight {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
 }
 
 .barLink {
   font-size: 12px;
   color: var(--bone-dim);
   text-decoration: none;
+  transition: color 160ms var(--ease);
 }
 
 .barLink:hover {
   color: var(--bone);
 }
 
-/* --- hero ---------------------------------------------------------------- */
+/* --- hero ----------------------------------------------------------------- */
 
 .hero {
-  padding: 96px 0 88px;
-  max-width: 660px;
+  display: grid;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+  gap: clamp(32px, 5vw, 76px);
+  align-items: center;
+  padding: clamp(40px, 7vh, 84px) 0 clamp(52px, 9vh, 100px);
+  min-height: min(72vh, 700px);
+}
+
+/* No max-width in `ch` here: this container inherits the 14px body size, so a
+   ch measure would size the headline against the wrong font. The grid column
+   sets the measure instead. */
+.heroContent {
+  min-width: 0;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  font-size: 12px;
+  color: var(--bone-dim);
+  white-space: nowrap;
+}
+
+.eyebrowRule {
+  width: 40px;
+  height: 1px;
+  background: var(--safelight);
+  flex: 0 0 auto;
 }
 
 .title {
   font-family: var(--font-instrument-serif), Georgia, serif;
-  font-size: 44px;
-  line-height: 1.05;
-  letter-spacing: -0.015em;
+  font-size: var(--display-1);
+  line-height: 1.0;
+  letter-spacing: -0.022em;
   color: var(--bone);
+  text-wrap: balance;
+}
+
+.titleDim {
+  color: var(--bone-dim);
 }
 
 .lede {
-  margin: 20px 0 0;
-  font-size: 16px;
-  line-height: 1.55;
+  margin: 26px 0 0;
+  max-width: 48ch;
+  font-size: clamp(15px, 1.1vw, 17px);
+  line-height: 1.62;
   color: var(--bone-dim);
 }
 
@@ -58,77 +133,232 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  margin-top: 32px;
+  margin-top: 34px;
+}
+
+.solid,
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 2px;
+  padding: 13px 20px;
+  font-size: 14px;
+  text-decoration: none;
+  transition: transform 200ms var(--ease), opacity 200ms var(--ease),
+    border-color 200ms var(--ease), color 200ms var(--ease);
 }
 
 .solid {
-  display: inline-block;
   background: var(--bone);
   color: var(--ink);
   border: 1px solid var(--bone);
-  border-radius: 2px;
-  padding: 11px 18px;
-  font-size: 14px;
   font-weight: 500;
-  text-decoration: none;
 }
 
 .solid:hover {
-  opacity: 0.88;
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .ghost {
-  display: inline-block;
   background: none;
   color: var(--bone-dim);
   border: 1px solid var(--ink-line);
-  border-radius: 2px;
-  padding: 11px 18px;
-  font-size: 14px;
-  text-decoration: none;
 }
 
 .ghost:hover {
   color: var(--bone);
-  border-color: #38424f;
+  border-color: color-mix(in srgb, var(--bone) 35%, transparent);
+  transform: translateY(-1px);
 }
 
-/* --- sections ------------------------------------------------------------ */
+.arrow {
+  transition: transform 220ms var(--ease);
+}
+
+.solid:hover .arrow,
+.ghost:hover .arrow {
+  transform: translateX(3px);
+}
+
+/*
+  The contact sheet beside the headline is made of EMPTY frames.
+
+  There is not a photograph on this page and there cannot be one — every image
+  in this application is a presigned URL issued after an authorization check,
+  and nobody has been authorized here yet. So the sheet is rendered as the thing
+  a sheet is before it is printed: the structure, the gutters, the frame
+  numbers, and nothing in them. The constraint became the picture.
+*/
+.sheetWrap {
+  align-self: center;
+}
+
+.sheet {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px 4px;
+  padding: 13px 13px 11px;
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--ink-raised) 60%, transparent);
+}
+
+.cell {
+  position: relative;
+}
+
+.frame {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  background: var(--ink-raised);
+  border: 1px solid color-mix(in srgb, var(--ink-line) 80%, transparent);
+  opacity: 0;
+  animation: develop 760ms var(--ease) both;
+}
+
+/* A print coming up in the tray: it arrives, it does not slide in. */
+@keyframes develop {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* The selection mark — the only accent on the page, and the single thing this
+   whole product is about. */
+.frameMarked {
+  border-color: var(--safelight);
+  background: color-mix(in srgb, var(--safelight) 9%, var(--ink-raised));
+}
+
+.frameMarked::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 6px;
+  height: 6px;
+  background: var(--safelight);
+}
+
+.frameNo {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  color: var(--bone-dim);
+  opacity: 0.5;
+}
+
+.sheetCaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--bone-dim);
+  opacity: 0.75;
+}
+
+.sheetCaptionMark {
+  color: var(--safelight);
+  opacity: 1;
+}
+
+/* --- section scaffolding -------------------------------------------------- */
 
 .section {
-  padding: 56px 0 0;
-  border-top: 1px solid var(--ink-line);
+  padding: clamp(72px, 11vh, 132px) 0 0;
+}
+
+/* Asymmetric: a narrow label rail and a wide content column, the classic
+   editorial two-thirds split rather than a centred stack. */
+.sectionHead {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 8fr);
+  gap: clamp(24px, 5vw, 72px);
+  padding-bottom: 44px;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.sectionLabel {
+  font-size: 12px;
+  color: var(--bone-dim);
+  padding-top: 10px;
+}
+
+.sectionLabel::before {
+  content: '';
+  display: block;
+  width: 28px;
+  height: 1px;
+  background: var(--ink-line);
+  margin-bottom: 14px;
 }
 
 .sectionTitle {
   font-family: var(--font-instrument-serif), Georgia, serif;
-  font-size: 28px;
-  line-height: 1.1;
+  font-size: var(--display-2);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
   color: var(--bone);
-  margin: 0 0 8px;
+  text-wrap: balance;
 }
 
 .sectionNote {
-  margin: 0 0 32px;
-  font-size: 14px;
+  margin: 18px 0 0;
+  font-size: 15px;
+  line-height: 1.62;
   color: var(--bone-dim);
-  max-width: 58ch;
+  max-width: 54ch;
 }
 
-/* Ledger rows, not cards: hairlines and generous space, no shadows. */
+/* --- steps ---------------------------------------------------------------- */
+
 .steps {
   list-style: none;
   margin: 0;
   padding: 0;
-  border-top: 1px solid var(--ink-line);
 }
 
 .step {
   display: grid;
-  grid-template-columns: 132px 1fr;
-  gap: 24px;
-  padding: 22px 2px 24px;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 8fr);
+  gap: clamp(24px, 5vw, 72px);
+  padding: 40px 0 42px;
   border-bottom: 1px solid var(--ink-line);
+}
+
+.stepIndex {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.stepNumeral {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-size: 44px;
+  line-height: 0.8;
+  color: var(--ink-line);
+  transition: color 400ms var(--ease);
+}
+
+.step:hover .stepNumeral {
+  color: var(--bone-dim);
 }
 
 .stepWho {
@@ -138,152 +368,243 @@
 
 .stepRole {
   display: block;
-  margin-top: 4px;
+  margin-top: 5px;
   font-size: 12px;
   color: var(--bone-dim);
-  opacity: 0.8;
+  opacity: 0.75;
 }
 
 .stepWhat {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: clamp(15px, 1.1vw, 17px);
+  line-height: 1.62;
   color: var(--bone-dim);
-  max-width: 62ch;
+  max-width: 60ch;
 }
 
 .stepWhat strong {
   color: var(--bone);
   font-weight: 400;
+  box-shadow: inset 0 -1px 0 var(--ink-line);
 }
 
-/* --- demo ---------------------------------------------------------------- */
+/* --- demo panel ----------------------------------------------------------- */
 
 .demo {
-  margin-top: 8px;
+  margin-top: 44px;
   border: 1px solid var(--ink-line);
-  border-radius: 2px;
-  background: var(--ink-raised);
-  padding: 26px 26px 28px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--ink-raised), color-mix(in srgb, var(--ink-raised) 55%, var(--ink)));
+  overflow: hidden;
 }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
+.demoHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 20px 26px;
+  border-bottom: 1px solid var(--ink-line);
+  font-size: 12px;
+  color: var(--bone-dim);
+}
+
+.demoHeadTitle {
+  color: var(--bone);
   font-size: 14px;
 }
 
-.table th {
-  text-align: left;
-  font-weight: 400;
-  font-size: 12px;
-  color: var(--bone-dim);
-  padding: 0 16px 10px 0;
-  border-bottom: 1px solid var(--ink-line);
+.rows {
+  display: grid;
 }
 
-.table td {
-  padding: 11px 16px 11px 0;
-  border-bottom: 1px solid var(--ink-line);
-  color: var(--bone-dim);
-  vertical-align: baseline;
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 4fr) minmax(0, 4fr);
+  gap: 20px;
+  align-items: baseline;
+  padding: 15px 26px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink-line) 60%, transparent);
+  transition: background-color 200ms var(--ease);
 }
 
-.table tr:last-child td {
+.row:last-child {
   border-bottom: 0;
 }
 
-.who {
-  color: var(--bone);
-  white-space: nowrap;
+.row:hover {
+  background: color-mix(in srgb, var(--bone) 3%, transparent);
 }
 
-/* Mono is for literal values you copy or type, never for labels. */
+.rowWho {
+  font-size: 14px;
+  color: var(--bone);
+}
+
+.rowNote {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--bone-dim);
+  opacity: 0.7;
+}
+
+/* Mono is reserved for frame numbers and for literal values a person copies or
+   types. Never for labels. */
 .value {
   font-family: var(--font-roboto-mono), ui-monospace, monospace;
-  font-size: 12px;
-  color: var(--bone);
+  font-size: 12.5px;
+  color: var(--bone-dim);
   user-select: all;
+  overflow-wrap: anywhere;
+}
+
+.valueStrong {
+  color: var(--bone);
+}
+
+.galleryRow {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 8fr);
+}
+
+.galleryLink {
+  color: var(--bone);
+  text-decoration: none;
+  box-shadow: inset 0 -1px 0 var(--ink-line);
+  transition: box-shadow 200ms var(--ease);
+}
+
+.galleryLink:hover {
+  box-shadow: inset 0 -1px 0 var(--safelight);
 }
 
 .demoFoot {
-  margin: 22px 0 0;
-  font-size: 12px;
+  padding: 20px 26px 24px;
+  border-top: 1px solid var(--ink-line);
+  font-size: 13px;
+  line-height: 1.66;
   color: var(--bone-dim);
-  line-height: 1.6;
-  max-width: 64ch;
+  max-width: 78ch;
 }
 
-.demoLink {
-  color: var(--bone);
-}
-
-/* --- built --------------------------------------------------------------- */
+/* --- facts ---------------------------------------------------------------- */
 
 .facts {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0 40px;
-  border-top: 1px solid var(--ink-line);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 clamp(28px, 5vw, 72px);
+  margin-top: 8px;
 }
 
 .fact {
-  padding: 20px 0 22px;
+  padding: 34px 0 32px;
   border-bottom: 1px solid var(--ink-line);
 }
 
+.factIndex {
+  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--bone-dim);
+  opacity: 0.55;
+}
+
 .factTitle {
-  margin: 0 0 6px;
-  font-size: 14px;
+  margin: 12px 0 8px;
+  font-size: 17px;
+  line-height: 1.3;
   color: var(--bone);
 }
 
 .factBody {
   margin: 0;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.65;
   color: var(--bone-dim);
+  max-width: 46ch;
 }
 
+/* --- footer --------------------------------------------------------------- */
+
 .footer {
-  padding: 44px 0 0;
-  font-size: 12px;
-  color: var(--bone-dim);
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 8fr);
+  gap: clamp(24px, 5vw, 72px);
+  padding: 64px 0 80px;
+  font-size: 13px;
   line-height: 1.7;
+  color: var(--bone-dim);
 }
 
 .footer a {
-  color: var(--bone-dim);
+  color: var(--bone);
+  text-decoration: none;
+  box-shadow: inset 0 -1px 0 var(--ink-line);
 }
 
 .footer a:hover {
-  color: var(--bone);
+  box-shadow: inset 0 -1px 0 var(--bone-dim);
 }
 
-@media (max-width: 720px) {
-  .hero {
-    padding: 56px 0 48px;
-  }
+.footerNote {
+  margin: 0;
+  max-width: 60ch;
+}
 
-  .title {
-    font-size: 34px;
-  }
+/* --- responsive ----------------------------------------------------------- */
 
-  .step {
+@media (max-width: 860px) {
+  .sectionHead,
+  .step,
+  .footer {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 14px;
+  }
+
+  .sectionLabel {
+    padding-top: 0;
   }
 
   .facts {
     grid-template-columns: 1fr;
   }
 
-  .demo {
-    padding: 20px 18px 22px;
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 44px;
+    min-height: auto;
   }
 
-  .table th:nth-child(3),
-  .table td:nth-child(3) {
-    display: none;
+  .heroContent {
+    max-width: 100%;
+  }
+
+  .sheet {
+    grid-template-columns: repeat(8, 1fr);
+  }
+
+  .row,
+  .galleryRow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .step {
+    padding: 30px 0 32px;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero {
+    padding-top: 32px;
+  }
+
+  .sheet {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .stepNumeral {
+    font-size: 32px;
   }
 }

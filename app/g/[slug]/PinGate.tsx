@@ -11,7 +11,7 @@ import styles from './gallery.module.css'
  * does not exist — the server returns one error for both, and this component
  * does not try to be more helpful than that.
  */
-export function PinGate({ slug, title }: { slug: string; title: string }) {
+export function PinGate({ slug }: { slug: string }) {
   const router = useRouter()
   const [digits, setDigits] = useState<string[]>(Array(6).fill(''))
   const [message, setMessage] = useState<string | null>(null)
@@ -68,50 +68,66 @@ export function PinGate({ slug, title }: { slug: string; title: string }) {
     setMessage(payload?.error?.message ?? 'That PIN doesn’t match.')
     setDigits(Array(6).fill(''))
     setShake(true)
-    setTimeout(() => setShake(false), 200)
+    setTimeout(() => setShake(false), 220)
     boxes.current[0]?.focus()
     setPending(false)
   }
 
   return (
     <div className={styles.gallerySurface}>
+      <div className={styles.paperGrain} aria-hidden="true" />
+
       <div className={styles.gate}>
-        <div className={styles.gateInner}>
-          <h1 className={styles.gateTitle}>{title}</h1>
-          <p className={styles.gateNote}>Enter the six-digit PIN from your photographer.</p>
+        <span className={styles.gateBrand}>Framehouse</span>
 
-          <div
-            className={`${styles.pinRow} ${shake ? styles.shake : ''}`}
-            role="group"
-            aria-label="Gallery PIN"
-          >
-            {digits.map((digit, index) => (
-              <input
-                key={index}
-                ref={(el) => {
-                  boxes.current[index] = el
-                }}
-                className={styles.pinBox}
-                value={digit}
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                autoFocus={index === 0}
-                disabled={pending}
-                aria-label={`Digit ${index + 1}`}
-                onChange={(e) => setDigit(index, e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Backspace' && !digits[index]) boxes.current[index - 1]?.focus()
-                  if (e.key === 'Enter') void submit(pin)
-                }}
-              />
-            ))}
+        <div className={styles.gateMiddle}>
+          <div className={styles.gateInner}>
+            <div className={styles.gateMark} />
+            <h1 className={styles.gateTitle}>Your photographs are ready</h1>
+            <p className={styles.gateNote}>
+              Enter the six-digit PIN your photographer sent you.
+            </p>
+
+            <div
+              className={`${styles.pinRow} ${shake ? styles.shake : ''}`}
+              role="group"
+              aria-label="Gallery PIN"
+            >
+              {digits.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(el) => {
+                    boxes.current[index] = el
+                  }}
+                  className={`${styles.pinBox} ${digit ? styles.pinBoxFilled : ''}`}
+                  value={digit}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  autoFocus={index === 0}
+                  disabled={pending}
+                  aria-label={`Digit ${index + 1}`}
+                  onChange={(e) => setDigit(index, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Backspace' && !digits[index]) boxes.current[index - 1]?.focus()
+                    if (e.key === 'Enter') void submit(pin)
+                  }}
+                />
+              ))}
+            </div>
+
+            <p
+              className={`${styles.gateMessage} ${pending ? styles.gateWorking : ''}`}
+              role="status"
+            >
+              {pending ? 'Checking…' : message}
+            </p>
           </div>
-
-          <p className={`${styles.gateMessage} ${pending ? styles.gateWorking : ''}`} role="status">
-            {pending ? 'Checking…' : message}
-          </p>
         </div>
+
+        <p className={styles.gateFoot}>
+          This gallery is private. The link alone does not open it.
+        </p>
       </div>
     </div>
   )

@@ -1,0 +1,77 @@
+/* Loading states are shaped like the thing that is arriving, so nothing shifts
+   when it lands. Never a spinner. */
+
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px 120px;
+}
+
+.bar {
+  height: 57px;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.block {
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--bone) 4%, transparent) 30%,
+    color-mix(in srgb, var(--bone) 8%, transparent) 50%,
+    color-mix(in srgb, var(--bone) 4%, transparent) 70%
+  );
+  background-size: 220% 100%;
+  border-radius: 2px;
+  animation: sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes sweep {
+  from { background-position: 180% 0; }
+  to { background-position: -80% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block { animation: none; }
+}
+
+.title {
+  height: 44px;
+  width: min(420px, 70%);
+  margin: 56px 0 14px;
+}
+
+.meta {
+  height: 14px;
+  width: 220px;
+  margin-bottom: 40px;
+}
+
+.toolbar {
+  height: 1px;
+  background: var(--ink-line);
+  margin-bottom: 28px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--gutter-sheet);
+}
+
+.frame {
+  aspect-ratio: 3 / 2;
+}
+
+.row {
+  height: 92px;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.rows {
+  border-top: 1px solid var(--ink-line);
+}
+
+@media (max-width: 620px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  }
+}

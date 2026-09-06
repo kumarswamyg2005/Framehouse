@@ -20,6 +20,14 @@
   --gutter-sheet: 4px;
   --gutter-gallery: 24px;
 
+  /* Display steps, entry page and gallery titles only. The tool stays at 44. */
+  --display-1: clamp(36px, 4.4vw, 62px);
+  --display-2: clamp(28px, 3.4vw, 46px);
+
+  /* One easing curve for everything, so motion across the app reads as one
+     hand. Weighted: leaves quickly, arrives slowly. */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
   color-scheme: dark;
 }
 
@@ -108,6 +116,85 @@ img {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Film grain.
+
+   Grain is the native texture of the subject — it is what film looks like, and
+   it is what the darkroom vernacular in DESIGN.md points at. It also does real
+   work: a large flat field of #12161C bands on an 8-bit panel and reads as dead
+   black, and a few percent of noise breaks both.
+
+   feTurbulence is rasterised once by the browser and composited on the GPU; it
+   is fixed to the viewport so it never repaints on scroll.
+   --------------------------------------------------------------------------- */
+.grain {
+  position: fixed;
+  inset: -50%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  will-change: transform;
+}
+
+/* A slow drift stops the grain reading as a static texture stuck to the glass.
+   Four steps, 800ms — the cadence of projected film, not a smooth slide. */
+@media (prefers-reduced-motion: no-preference) {
+  .grain {
+    animation: grain-drift 800ms steps(1) infinite;
+  }
+}
+
+@keyframes grain-drift {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-2%, 1%); }
+  50% { transform: translate(1%, -2%); }
+  75% { transform: translate(-1%, -1%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Content sits above the grain. */
+.aboveGrain {
+  position: relative;
+  z-index: 2;
+}
+
+/* ---------------------------------------------------------------------------
+   Scroll-driven reveals.
+
+   Progressive enhancement, deliberately: the default state below is the FINAL
+   state, so a browser with no animation-timeline support renders the page
+   correctly and simply loses the choreography. The animation is only attached
+   inside the @supports block.
+   --------------------------------------------------------------------------- */
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal-in linear both;
+      animation-timeline: view();
+      /* Resolves well before the element is centred, so reading is never
+         waiting on the animation to finish. */
+      animation-range: entry 0% cover 26%;
+    }
+  }
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

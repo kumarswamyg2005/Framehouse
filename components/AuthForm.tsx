@@ -9,14 +9,20 @@ type Mode = 'login' | 'register'
 
 const COPY = {
   login: {
-    tagline: 'Sign in to your workspace.',
+    tagline:
+      'Your events, your team’s uploads, and the galleries you have delivered — all behind this form.',
+    panelTitle: 'Welcome back',
+    panelNote: 'Use the email your lead added you with.',
     submit: 'Sign in',
     pending: 'Signing in…',
     endpoint: '/api/auth/login',
     footer: { lead: 'Leading a team for the first time?', href: '/register', link: 'Create a workspace' },
   },
   register: {
-    tagline: 'Create a workspace for your team.',
+    tagline:
+      'Set up a workspace, add the people shooting with you, and start delivering galleries.',
+    panelTitle: 'Create a workspace',
+    panelNote: 'This makes you the lead. You can add your team straight afterwards.',
     submit: 'Create workspace',
     pending: 'Creating…',
     endpoint: '/api/auth/register',
@@ -64,14 +70,37 @@ export function AuthForm({ mode }: { mode: Mode }) {
   }
 
   return (
-    <main className={styles.shell}>
-      <div className={styles.column}>
-        <h1 className={styles.wordmark}>Framehouse</h1>
-        <p className={styles.tagline}>{copy.tagline}</p>
+    <>
+      <div className="grain" aria-hidden="true" />
 
-        <hr className={styles.rule} />
+      <main className={styles.shell}>
+        <div className={styles.rail}>
+          <Link href="/" className={styles.home}>
+            ← Framehouse
+          </Link>
+          <h1 className={styles.wordmark}>
+            {mode === 'login' ? 'Sign in' : 'Create a workspace'}
+          </h1>
+          <p className={styles.tagline}>{copy.tagline}</p>
 
-        <form onSubmit={onSubmit} noValidate>
+          {/* Empty frames — nothing is shown until someone is authorized. */}
+          <div className={styles.strip} aria-hidden="true">
+            {Array.from({ length: 18 }, (_, i) => (
+              <div
+                key={i}
+                className={`${styles.stripFrame} ${
+                  [3, 9, 14].includes(i) ? styles.stripFrameMarked : ''
+                }`}
+                style={{ animationDelay: `${100 + i * 30}ms` }}
+              />
+            ))}
+          </div>
+        </div>
+
+        <form className={styles.panel} onSubmit={onSubmit} noValidate>
+          <h2 className={styles.panelTitle}>{copy.panelTitle}</h2>
+          <p className={styles.panelNote}>{copy.panelNote}</p>
+
           {mode === 'register' && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor="name">
@@ -83,6 +112,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 name="name"
                 type="text"
                 autoComplete="name"
+                placeholder="Meera Raghavan"
                 required
                 disabled={pending}
                 aria-invalid={error ? true : undefined}
@@ -100,7 +130,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
               name="email"
               type="email"
               autoComplete="email"
-              autoFocus={mode === 'login'}
+              placeholder="you@studio.com"
               required
               disabled={pending}
               aria-invalid={error ? true : undefined}
@@ -138,12 +168,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <button className={styles.submit} type="submit" disabled={pending}>
             {pending ? copy.pending : copy.submit}
           </button>
-        </form>
 
-        <p className={styles.footer}>
-          {copy.footer.lead} <Link href={copy.footer.href}>{copy.footer.link}</Link>
-        </p>
-      </div>
-    </main>
+          <p className={styles.footer}>
+            {copy.footer.lead} <Link href={copy.footer.href}>{copy.footer.link}</Link>
+          </p>
+        </form>
+      </main>
+    </>
   )
 }

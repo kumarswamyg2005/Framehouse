@@ -1,35 +1,77 @@
+/* The client gallery — a print-viewing surface. Light, generous, near-zero
+   chrome. The photographs are the only loud thing here. */
+
 .gallerySurface {
+  position: relative;
   min-height: 100dvh;
   background: var(--paper);
   color: var(--graphite);
 }
 
-/* --- PIN gate ------------------------------------------------------------ */
+/* Grain on paper reads as paper stock rather than film, and keeps the flat
+   field from looking like a screenshot of nothing. */
+.paperGrain {
+  position: fixed;
+  inset: -50%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+}
+
+/* --- PIN gate ------------------------------------------------------------- */
 
 .gate {
+  position: relative;
+  z-index: 2;
   min-height: 100dvh;
   display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 28px clamp(20px, 5vw, 48px) 36px;
+}
+
+.gateBrand {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-size: 18px;
+  color: var(--graphite);
+  opacity: 0.55;
+}
+
+.gateMiddle {
+  display: grid;
   place-items: center;
-  padding: 32px 20px;
 }
 
 .gateInner {
   width: 100%;
-  max-width: 400px;
+  max-width: 430px;
   text-align: center;
+}
+
+.gateMark {
+  width: 34px;
+  height: 1px;
+  background: var(--safelight);
+  margin: 0 auto 26px;
 }
 
 .gateTitle {
   font-family: var(--font-instrument-serif), Georgia, serif;
-  font-size: 44px;
-  line-height: 1.05;
-  letter-spacing: -0.015em;
+  font-size: var(--display-2);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
   color: var(--graphite);
 }
 
 .gateNote {
-  margin: 12px 0 32px;
-  font-size: 14px;
+  margin: 14px 0 36px;
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--graphite-dim);
 }
 
@@ -40,24 +82,36 @@
 }
 
 .pinBox {
-  width: 46px;
-  height: 56px;
+  width: clamp(40px, 12vw, 50px);
+  height: 58px;
   text-align: center;
   background: var(--paper-shade);
   border: 1px solid transparent;
-  border-radius: 2px;
+  border-radius: 3px;
   color: var(--graphite);
   font-family: var(--font-roboto-mono), ui-monospace, monospace;
   font-size: 20px;
+  transition: border-color 180ms var(--ease), background-color 180ms var(--ease),
+    transform 180ms var(--ease);
+}
+
+.pinBox:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--paper-shade) 70%, var(--graphite) 4%);
 }
 
 .pinBox:focus-visible {
   outline: 2px solid var(--safelight);
   outline-offset: 2px;
+  transform: translateY(-1px);
+}
+
+.pinBoxFilled {
+  border-color: color-mix(in srgb, var(--graphite) 22%, transparent);
+  background: var(--paper);
 }
 
 .pinBox:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .shake {
@@ -71,13 +125,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .shake {
-    animation: none;
-  }
+  .shake { animation: none; }
 }
 
 .gateMessage {
-  margin: 22px 0 0;
+  margin: 24px 0 0;
   font-size: 14px;
   color: var(--graphite);
   min-height: 21px;
@@ -87,32 +139,84 @@
   color: var(--graphite-dim);
 }
 
-/* --- gallery ------------------------------------------------------------- */
+.gateFoot {
+  font-size: 12px;
+  color: var(--graphite-dim);
+  opacity: 0.7;
+  text-align: center;
+}
+
+/* --- gallery header ------------------------------------------------------- */
 
 .header {
-  max-width: 1280px;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 64px 24px 40px;
+  padding: clamp(56px, 10vh, 108px) clamp(20px, 4vw, 44px) clamp(36px, 6vh, 60px);
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+  gap: clamp(20px, 4vw, 56px);
+  align-items: end;
+}
+
+.titleBlock {
+  min-width: 0;
+}
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 12px;
+  color: var(--graphite-dim);
+}
+
+.kickerRule {
+  width: 34px;
+  height: 1px;
+  background: var(--safelight);
 }
 
 .title {
   font-family: var(--font-instrument-serif), Georgia, serif;
-  font-size: 44px;
-  line-height: 1.05;
-  letter-spacing: -0.015em;
+  font-size: var(--display-1);
+  line-height: 0.98;
+  letter-spacing: -0.024em;
   color: var(--graphite);
+  text-wrap: balance;
 }
 
-.credit {
-  margin: 10px 0 0;
-  font-size: 14px;
+/* A metadata rail rather than a subtitle: reads like a print caption. */
+.meta {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+.metaRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--paper-shade);
+  font-size: 13px;
+}
+
+.metaKey {
   color: var(--graphite-dim);
 }
 
+.metaValue {
+  color: var(--graphite);
+  text-align: right;
+}
+
+/* --- the sheet ------------------------------------------------------------ */
+
 .sheet {
-  max-width: 1280px;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 0 24px 96px;
+  padding: 0 clamp(20px, 4vw, 44px) clamp(64px, 10vh, 112px);
   column-count: 3;
   column-gap: var(--gutter-gallery);
 }
@@ -126,76 +230,108 @@
   width: 100%;
   display: block;
   cursor: zoom-in;
-  /* One orchestrated moment: the grid fades in on unlock, staggered. */
-  animation: rise 400ms ease both;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--paper-shade);
+  /* One orchestrated moment: the grid arrives on unlock, staggered. */
+  animation: rise 460ms var(--ease) both;
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .figure {
-    animation: none;
-  }
+  .figure { animation: none; }
 }
 
 .figure img {
   width: 100%;
   height: auto;
-  background: var(--paper-shade);
+  display: block;
+  transition: transform 700ms var(--ease), filter 400ms var(--ease);
+}
+
+/* The only hover in the gallery: the photograph itself comes forward slightly
+   inside a frame that does not move. No card lift, no shadow. */
+.figure:hover img,
+.figure:focus-visible img {
+  transform: scale(1.028);
+}
+
+.figure:focus-visible {
+  outline: 2px solid var(--safelight);
+  outline-offset: 3px;
 }
 
 .footer {
-  max-width: 1280px;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 0 24px 72px;
+  padding: 0 clamp(20px, 4vw, 44px) 80px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
   font-size: 12px;
   color: var(--graphite-dim);
+  border-top: 1px solid var(--paper-shade);
+  padding-top: 26px;
 }
 
 @media (max-width: 900px) {
-  .sheet {
-    column-count: 2;
-  }
-
+  .sheet { column-count: 2; }
   .header {
-    padding: 44px 20px 28px;
-  }
-
-  .title {
-    font-size: 34px;
-  }
-
-  .sheet,
-  .footer {
-    padding-left: 20px;
-    padding-right: 20px;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 28px;
   }
 }
 
-/* --- lightbox ------------------------------------------------------------ */
+@media (max-width: 520px) {
+  .sheet { column-count: 2; column-gap: 12px; }
+  .figure { margin-bottom: 12px; }
+}
+
+/* --- lightbox ------------------------------------------------------------- */
 
 .lightbox {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 60;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  background: rgb(27 27 25 / 0.97);
+  background: rgb(27 27 25 / 0.975);
+  backdrop-filter: blur(4px);
+  animation: lb-in 240ms var(--ease) both;
+}
+
+@keyframes lb-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .lightboxTop {
   display: flex;
-  justify-content: flex-end;
-  padding: 16px 20px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px clamp(16px, 3vw, 28px);
+  color: color-mix(in srgb, var(--paper) 72%, transparent);
+  font-size: 12px;
+}
+
+.lightboxName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .lightboxStage {
   display: grid;
   place-items: center;
-  padding: 0 20px;
+  padding: 0 clamp(12px, 3vw, 28px);
   min-height: 0;
 }
 
@@ -203,45 +339,86 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  border-radius: 2px;
+  animation: lb-img 340ms var(--ease) both;
+}
+
+@keyframes lb-img {
+  from { opacity: 0; transform: scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightbox, .lightboxStage img { animation: none; }
 }
 
 .lightboxBottom {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  padding: 16px 20px 26px;
+  gap: 16px;
+  padding: 18px 20px 28px;
 }
 
 .counter {
   font-family: var(--font-roboto-mono), ui-monospace, monospace;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
-  color: var(--paper-shade);
-  opacity: 0.75;
+  color: color-mix(in srgb, var(--paper) 62%, transparent);
+  min-width: 74px;
+  text-align: center;
 }
 
 .lbButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: none;
-  border: 1px solid rgb(242 242 239 / 0.28);
+  border: 1px solid rgb(242 242 239 / 0.24);
   border-radius: 2px;
-  padding: 6px 12px;
+  padding: 7px 13px;
   font-size: 12px;
   color: var(--paper);
   cursor: pointer;
+  text-decoration: none;
+  transition: border-color 200ms var(--ease), background-color 200ms var(--ease);
 }
 
 .lbButton:hover:not(:disabled) {
-  border-color: rgb(242 242 239 / 0.6);
+  border-color: rgb(242 242 239 / 0.62);
+  background: rgb(242 242 239 / 0.06);
 }
 
 .lbButton:disabled {
-  opacity: 0.3;
+  opacity: 0.28;
   cursor: default;
 }
 
 .lbLoading {
   font-size: 12px;
-  color: var(--paper-shade);
-  opacity: 0.7;
+  color: color-mix(in srgb, var(--paper) 60%, transparent);
+}
+
+/* A skeleton in the shape of what is arriving, never a spinner. */
+.lbSkeleton {
+  width: min(70vw, 900px);
+  aspect-ratio: 3 / 2;
+  border-radius: 2px;
+  background: linear-gradient(
+    100deg,
+    rgb(242 242 239 / 0.05) 30%,
+    rgb(242 242 239 / 0.11) 50%,
+    rgb(242 242 239 / 0.05) 70%
+  );
+  background-size: 220% 100%;
+  animation: sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes sweep {
+  from { background-position: 180% 0; }
+  to { background-position: -80% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lbSkeleton { animation: none; }
 }
