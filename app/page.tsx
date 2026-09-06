@@ -94,6 +94,9 @@ const FACTS = [
 export default async function Home() {
   const [actor, gallery] = await Promise.all([getActor(), demoGallery()])
   const repoUrl = process.env.NEXT_PUBLIC_REPO_URL
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+  // Seeded demo data only — this block does not render without it.
+  const demoPin = process.env.SEED_GALLERY_PIN ?? '482917'
 
   return (
     <>
@@ -138,18 +141,16 @@ export default async function Home() {
                   {actor ? 'Go to your events' : 'Sign in to the demo'}
                   <span className={styles.arrow}>→</span>
                 </Link>
-                {gallery && (
-                  <Link className={styles.ghost} href={`/g/${gallery.slug}`}>
-                    Open a client gallery
-                    <span className={styles.arrow}>→</span>
-                  </Link>
-                )}
+                <a className={styles.ghost} href="#how">
+                  See how it works
+                  <span className={styles.arrow}>↓</span>
+                </a>
               </div>
             </div>
 
-            {/* Empty frames. See the note at the top of this file. */}
-            <div className={styles.sheetWrap} aria-hidden="true">
-              <div className={styles.sheet}>
+            <div className={styles.sheetWrap}>
+              {/* Empty frames. See the note at the top of this file. */}
+              <div className={styles.sheet} aria-hidden="true">
                 {Array.from({ length: HERO_FRAMES }, (_, i) => (
                   <div className={styles.cell} key={i}>
                     <div
@@ -164,10 +165,50 @@ export default async function Home() {
                   </div>
                 ))}
               </div>
-              <p className={styles.sheetCaption}>
+              <p className={styles.sheetCaption} aria-hidden="true">
                 <span>Contact sheet · {HERO_FRAMES} frames</span>
                 <span className={styles.sheetCaptionMark}>{MARKED_FRAMES.size} selected</span>
               </p>
+
+              {/* What the other end of the product actually looks like. */}
+              {gallery && (
+                <div className={styles.pass}>
+                  <p className={styles.passHead}>
+                    <span className={styles.passDot} aria-hidden="true" />
+                    What the client receives
+                  </p>
+                  <div className={styles.passBody}>
+                    <p className={styles.passTitle}>{gallery.title}</p>
+                    <span className={styles.passLink}>
+                      {(appUrl || '').replace(/^https?:\/\//, '')}/g/{gallery.slug}
+                    </span>
+
+                    <div className={styles.passPinRow}>
+                      <span className={styles.passPinLabel}>PIN</span>
+                      <span className={styles.passDigits} aria-label={`PIN ${demoPin}`}>
+                        {demoPin.split('').map((digit, i) => (
+                          <span className={styles.passDigit} key={i} aria-hidden="true">
+                            {digit}
+                          </span>
+                        ))}
+                      </span>
+                    </div>
+
+                    <Link
+                      className={`${styles.solid} ${styles.passCta}`}
+                      href={`/g/${gallery.slug}`}
+                    >
+                      Open it as the client
+                      <span className={styles.arrow}>→</span>
+                    </Link>
+
+                    <p className={styles.passNote}>
+                      A real client gets the link and the PIN separately, and never an account.
+                      Type it wrong six times and the gallery locks you out for fifteen minutes.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 

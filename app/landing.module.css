@@ -279,6 +279,114 @@
   opacity: 1;
 }
 
+/*
+  The client pass.
+
+  The right column reads as the two ends of the product: the contact sheet the
+  photographer culls on, and beneath it the card the client actually receives.
+  Showing the PIN here is the point — a visitor should be able to see what a
+  delivery looks like and then go and open it, rather than being handed a button
+  labelled "Open a client gallery" and no way in.
+*/
+.pass {
+  margin-top: 18px;
+  border: 1px solid var(--ink-line);
+  border-radius: 4px;
+  background: linear-gradient(
+    170deg,
+    color-mix(in srgb, var(--ink-raised) 90%, transparent),
+    color-mix(in srgb, var(--ink-raised) 45%, transparent)
+  );
+  overflow: hidden;
+}
+
+.passHead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ink-line);
+  font-size: 12px;
+  color: var(--bone-dim);
+}
+
+.passDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+
+.passBody {
+  padding: 16px;
+}
+
+.passTitle {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--bone);
+  margin: 0 0 4px;
+}
+
+.passLink {
+  display: block;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--bone-dim);
+  overflow-wrap: anywhere;
+  user-select: all;
+  margin-bottom: 16px;
+}
+
+.passPinRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.passPinLabel {
+  font-size: 12px;
+  color: var(--bone-dim);
+}
+
+/* Deliberately the same shape as the real gate's inputs, so the card reads as a
+   preview of the thing rather than as decoration. */
+.passDigits {
+  display: flex;
+  gap: 5px;
+}
+
+.passDigit {
+  width: 26px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 14px;
+  color: var(--bone);
+  user-select: all;
+}
+
+/* The card's own primary action, full width so the card reads as one object
+   rather than as a panel with a button dropped into it. */
+.passCta {
+  width: 100%;
+  justify-content: center;
+}
+
+.passNote {
+  margin: 14px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--bone-dim);
+  opacity: 0.8;
+}
+
 /* --- section scaffolding -------------------------------------------------- */
 
 .section {
@@ -555,6 +663,10 @@
 /* --- responsive ----------------------------------------------------------- */
 
 @media (max-width: 860px) {
+  .pass {
+    max-width: 420px;
+  }
+
   .sectionHead,
   .step,
   .footer {
@@ -598,6 +710,19 @@
 @media (max-width: 520px) {
   .hero {
     padding-top: 32px;
+  }
+
+  /* Equal-width, full-bleed actions — two buttons of different widths stacked
+     on top of each other reads as ragged rather than as a pair. */
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .actions .solid,
+  .actions .ghost {
+    justify-content: center;
   }
 
   .sheet {
