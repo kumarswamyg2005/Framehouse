@@ -106,14 +106,18 @@ test('lead publishes a gallery and a customer opens it with the PIN', async ({ b
 
   for (let i = 0; i < SELECT_COUNT; i++) await frames.nth(i).click()
   await expect(lead.getByText('Selection saved')).toBeVisible()
-  await expect(lead.getByText(`${SELECT_COUNT} selected`)).toBeVisible()
+  // The count and its noun are separate elements for typography; the stat
+  // carries the whole phrase as its accessible name.
+  await expect(lead.getByLabel(`${SELECT_COUNT} selected`)).toBeVisible()
 
   await lead.getByRole('button', { name: 'Publish' }).click()
   const pinBoxes = lead.locator('input[aria-label^="PIN digit"]')
   for (let i = 0; i < 6; i++) await pinBoxes.nth(i).fill(PIN[i]!)
   await lead.getByRole('button', { name: 'Publish', exact: true }).last().click()
 
-  await expect(lead.getByText('Published', { exact: true })).toBeVisible()
+  // The durable state, not the toast that fades: the badge is what a lead comes
+  // back to the page and reads.
+  await expect(lead.getByLabel('Gallery published')).toBeVisible()
   const shareUrl = await lead.locator('span:has-text("/g/")').first().innerText()
   expect(shareUrl).toContain('/g/')
 

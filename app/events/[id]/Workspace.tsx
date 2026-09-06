@@ -173,26 +173,56 @@ export function Workspace({
   return (
     <>
       <div className={sheet.toolbar}>
-        <span className={sheet.counts}>
-          <span className={sheet.countStrong}>{photos.length}</span>{' '}
-          {photos.length === 1 ? 'frame' : 'frames'}
+        <div className={sheet.stats}>
+          {/* The visible label is split across two elements for typography, so
+              each stat carries an accessible name that reads as one phrase. */}
+          <span
+            className={sheet.stat}
+            aria-label={`${photos.length} ${photos.length === 1 ? 'frame' : 'frames'}`}
+          >
+            <span className={sheet.statValue} aria-hidden="true">
+              {photos.length}
+            </span>
+            <span aria-hidden="true">{photos.length === 1 ? 'frame' : 'frames'}</span>
+          </span>
+
           {isLead && (
-            <>
-              {' · '}
-              <span className={sheet.countStrong}>{selectedIds.length}</span> selected
-              {' · '}
-              {gallery?.isPublished ? 'Published' : 'Draft'}
-            </>
+            <span
+              className={`${sheet.stat} ${sheet.statSelected}`}
+              aria-label={`${selectedIds.length} selected`}
+            >
+              <span className={sheet.statValue} aria-hidden="true">
+                {selectedIds.length}
+              </span>
+              <span aria-hidden="true">selected</span>
+            </span>
           )}
-          {saveLabel && <> · {saveLabel}</>}
-        </span>
+
+          {isLead && (
+            <span className={sheet.stat}>
+              <span
+                className={`${sheet.badge} ${gallery?.isPublished ? sheet.badgeLive : ''}`}
+                aria-label={gallery?.isPublished ? 'Gallery published' : 'Gallery draft'}
+              >
+                <span className={sheet.badgeDot} aria-hidden="true" />
+                <span aria-hidden="true">{gallery?.isPublished ? 'Published' : 'Draft'}</span>
+              </span>
+            </span>
+          )}
+
+          {saveLabel && (
+            <span className={sheet.stat}>
+              <span className={sheet.saveState}>{saveLabel}</span>
+            </span>
+          )}
+        </div>
 
         {isLead && (
           <span className={sheet.actions}>
             {selectedIds.length > 0 && (
               <button
                 type="button"
-                className={sheet.ghost}
+                className="btn btnQuiet btnSmall"
                 onClick={() => onSelectionChange([])}
                 disabled={saveState === 'saving'}
               >
@@ -201,9 +231,14 @@ export function Workspace({
             )}
             <button
               type="button"
-              className={sheet.solid}
+              className="btn btnPrimary btnSmall"
               onClick={() => setPanelOpen((open) => !open)}
               disabled={selectedIds.length === 0 && !gallery?.isPublished}
+              title={
+                selectedIds.length === 0 && !gallery?.isPublished
+                  ? 'Select at least one frame first'
+                  : undefined
+              }
             >
               {gallery?.isPublished ? 'Gallery' : 'Publish'}
             </button>
@@ -226,16 +261,22 @@ export function Workspace({
       <Uploader eventId={eventId} hasPhotos={photos.length > 0} onUploaded={onUploaded} />
 
       {photos.length === 0 ? (
-        <p className={sheet.empty}>
-          {isLead
-            ? 'Nothing uploaded yet. Frames from everyone on this event land here.'
-            : 'Nothing uploaded yet. Only you can see the frames you upload here.'}
-        </p>
+        <div className={sheet.emptyState}>
+          <p className={sheet.emptyTitle}>
+            {isLead ? 'No frames yet' : 'Nothing uploaded yet'}
+          </p>
+          <p className={sheet.emptyBody}>
+            {isLead
+              ? 'Frames from everyone on this event land here. Add your team below, or drop your own files above.'
+              : 'Drop files above to upload. Only you can see the frames you upload — your lead sees them too, nobody else on the team does.'}
+          </p>
+        </div>
       ) : (
         <>
           {isLead && selectedIds.length === 0 && (
-            <p className={sheet.empty} style={{ padding: '20px 0 0' }}>
-              Select the frames you want the client to see.
+            <p className={sheet.prompt}>
+              Select the frames you want the client to see — click one, or press{' '}
+              <kbd className={sheet.kbd}>space</kbd> on a focused frame.
             </p>
           )}
           <ContactSheet

@@ -46,7 +46,11 @@ export function Uploader({
       >
         <p className={styles.dropCopy}>
           {hasPhotos ? 'Drag more photos here, or ' : 'No photos yet. Drag them here, or '}
-          <button type="button" className={styles.pick} onClick={() => inputRef.current?.click()}>
+          <button
+            type="button"
+            className={styles.pick}
+            onClick={() => inputRef.current?.click()}
+          >
             choose files
           </button>
           .
@@ -74,7 +78,7 @@ export function Uploader({
                 : `${done} uploaded${failed > 0 ? `, ${failed} failed` : ''}`}
             </span>
             {active === 0 && done > 0 && (
-              <button type="button" className={styles.dismiss} onClick={clearFinished}>
+              <button type="button" className="btnBare" onClick={clearFinished}>
                 Clear finished
               </button>
             )}
@@ -97,16 +101,49 @@ export function Uploader({
                 <span className={styles.queueName} title={item.file.name}>
                   {item.file.name}
                 </span>
+
+                <span
+                  className={styles.rowBar}
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(
+                    (item.status === 'ready' ? 1 : item.progress) * 100
+                  )}
+                  aria-label={`${item.file.name} upload progress`}
+                >
+                  <span
+                    className={`${styles.rowBarFill} ${
+                      item.status === 'ready'
+                        ? styles.rowBarDone
+                        : item.status === 'failed'
+                          ? styles.rowBarFailed
+                          : ''
+                    }`}
+                    style={{
+                      width: `${
+                        (item.status === 'ready' || item.status === 'failed'
+                          ? 1
+                          : item.progress) * 100
+                      }%`,
+                    }}
+                  />
+                </span>
+
                 <span className={styles.queueState}>
                   {item.status === 'failed' ? (
                     <>
-                      <span>{item.error}</span>
-                      <button type="button" className={styles.retry} onClick={() => retry(item.id)}>
+                      <span title={item.error}>{item.error}</span>
+                      <button
+                        type="button"
+                        className="btn btnQuiet btnSmall"
+                        onClick={() => retry(item.id)}
+                      >
                         Retry
                       </button>
                     </>
                   ) : item.status === 'uploading' ? (
-                    <span>{Math.round(item.progress * 100)}%</span>
+                    <span className={styles.pct}>{Math.round(item.progress * 100)}%</span>
                   ) : (
                     <span className={item.status === 'ready' ? styles.stateReady : undefined}>
                       {STATE_LABEL[item.status]}

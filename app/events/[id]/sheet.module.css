@@ -6,22 +6,83 @@
   top: 0;
   z-index: 5;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 14px 0;
-  background: var(--ink);
+  padding: 13px 0;
+  background: color-mix(in srgb, var(--ink) 88%, transparent);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--ink-line);
 }
 
-.counts {
+/* Discrete stats, separated by hairlines, so a glance lands on a number rather
+   than having to read a sentence. */
+.stats {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--bone-dim);
+  white-space: nowrap;
+}
+
+.stat + .stat {
+  padding-left: 18px;
+  border-left: 1px solid var(--ink-line);
+}
+
+.statValue {
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--bone);
+}
+
+.statSelected .statValue {
+  color: var(--safelight);
+}
+
+/* Publication state reads as a state, not as another number. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  border: 1px solid var(--ink-line);
+  border-radius: 999px;
+  font-size: 12px;
   color: var(--bone-dim);
 }
 
-.countStrong {
-  color: var(--bone);
+.badgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bone-dim);
+}
+
+.badgeLive {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+}
+
+.badgeLive .badgeDot {
+  background: var(--ok);
+}
+
+.saveState {
+  font-size: 12px;
+  color: var(--bone-dim);
+  white-space: nowrap;
 }
 
 .actions {
@@ -158,9 +219,14 @@
   cursor: default;
 }
 
+/* One line, always. A wrapping caption makes the grid rows ragged, which is the
+   opposite of what a contact sheet is for. */
 .frameNo {
   display: block;
   margin: 5px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
@@ -207,6 +273,53 @@
   color: var(--bone);
 }
 
+/* Empty states say what this screen is for and what to do next, rather than
+   just reporting that it is empty. */
+.emptyState {
+  margin: 32px 0 0;
+  padding: 44px 28px;
+  border: 1px solid var(--ink-line);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--ink-raised) 45%, transparent);
+  text-align: center;
+}
+
+.emptyTitle {
+  margin: 0 0 8px;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 22px;
+  color: var(--bone);
+}
+
+.emptyBody {
+  margin: 0 auto;
+  max-width: 52ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bone-dim);
+}
+
+.prompt {
+  margin: 22px 0 0;
+  font-size: 14px;
+  color: var(--bone-dim);
+}
+
+.kbd {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--bone);
+  border: 1px solid var(--ink-line);
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+
+.pct {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  color: var(--bone-dim);
+}
+
 .empty {
   padding: 56px 0;
   font-size: 14px;
@@ -217,16 +330,25 @@
 
 .dropzone {
   border: 1px dashed var(--ink-line);
-  border-radius: 2px;
-  padding: 34px 20px;
+  border-radius: 4px;
+  padding: 30px 20px;
   text-align: center;
   margin: 24px 0 0;
-  transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out);
+  transition:
+    border-color var(--dur-ui) var(--ease-out),
+    background-color var(--dur-ui) var(--ease-out);
 }
 
-.dropzoneActive {
+.dropzone:hover {
+  border-color: color-mix(in srgb, var(--bone) 26%, var(--ink-line));
+  background: color-mix(in srgb, var(--bone) 2%, transparent);
+}
+
+.dropzoneActive,
+.dropzone:focus-within {
   border-color: var(--safelight);
-  background: var(--ink-raised);
+  border-style: solid;
+  background: color-mix(in srgb, var(--safelight) 6%, transparent);
 }
 
 .dropCopy {
@@ -294,13 +416,37 @@
 }
 
 .queueRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px auto;
   align-items: center;
-  justify-content: space-between;
   gap: 14px;
-  padding: 9px 2px;
+  padding: 10px 2px;
   border-bottom: 1px solid var(--ink-line);
   font-size: 12px;
+}
+
+/* A bar per file rather than a bare percentage: it shows movement, which is
+   what tells someone on venue wifi that anything is happening at all. */
+.rowBar {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--ink-line);
+  overflow: hidden;
+}
+
+.rowBarFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--bone-dim);
+  transition: width var(--dur-ui) linear, background-color var(--dur-ui) var(--ease-out);
+}
+
+.rowBarDone {
+  background: var(--ok);
+}
+
+.rowBarFailed {
+  background: var(--safelight);
 }
 
 .queueName {
@@ -312,11 +458,15 @@
 }
 
 .queueState {
-  flex: 0 0 auto;
+  justify-self: end;
   color: var(--bone-dim);
   display: flex;
   align-items: center;
   gap: 10px;
+  max-width: 30ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stateReady {
@@ -337,12 +487,49 @@
   border-color: #38424f;
 }
 
+/* No keyboard, no keyboard hints. */
+@media (max-width: 760px), (hover: none) {
+  .hints {
+    display: none;
+  }
+}
+
 @media (max-width: 620px) {
   .grid {
     grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
   }
 
+  /* The byline costs more than it gives at this width — the lead can open a
+     frame to see who shot it. */
+  .byline {
+    display: none;
+  }
+
   .toolbar {
     gap: 10px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stats {
+    gap: 12px;
+  }
+
+  .stat + .stat {
+    padding-left: 12px;
+  }
+
+  .queueRow {
+    grid-template-columns: minmax(0, 1fr) 72px;
+  }
+
+  .queueState {
+    grid-column: 1 / -1;
+    justify-self: start;
+    max-width: 100%;
+  }
+
+  .emptyState {
+    padding: 32px 18px;
   }
 }

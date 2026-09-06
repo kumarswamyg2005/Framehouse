@@ -278,3 +278,177 @@ img {
 }
 
 
+
+/* ===========================================================================
+   Controls.
+
+   Buttons and fields were defined separately in five CSS modules and had drifted
+   — different paddings, different hovers, two different disabled opacities. They
+   live here now, as global classes, so every surface gets the same affordances
+   and the same feedback. Each surface remaps --ink/--bone, so these follow the
+   room they are in without knowing which one it is.
+   =========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 11px 16px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-ui) var(--ease-out),
+    border-color var(--dur-ui) var(--ease-out),
+    color var(--dur-ui) var(--ease-out),
+    opacity var(--dur-ui) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out);
+}
+
+/* A press that answers immediately. Under 100ms is the difference between a
+   control that feels connected and one that feels remote. */
+.btn:active:not(:disabled):not([aria-disabled='true']) {
+  transform: translateY(1px);
+  transition-duration: 60ms;
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* One primary action per view. */
+.btnPrimary {
+  background: var(--bone);
+  color: var(--ink);
+  border-color: var(--bone);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--bone) 88%, var(--ink));
+}
+
+/* Secondary: visible edge, so it reads as a control rather than a link. */
+.btnQuiet {
+  background: transparent;
+  color: var(--bone-dim);
+  border-color: var(--ink-line);
+}
+
+.btnQuiet:hover:not(:disabled) {
+  color: var(--bone);
+  border-color: color-mix(in srgb, var(--bone) 34%, transparent);
+  background: color-mix(in srgb, var(--bone) 4%, transparent);
+}
+
+/* Destructive. Uses the accent only on hover, so a Delete never sits on screen
+   competing with the selection marks for attention. */
+.btnDanger:hover:not(:disabled) {
+  color: var(--safelight);
+  border-color: color-mix(in srgb, var(--safelight) 55%, transparent);
+  background: color-mix(in srgb, var(--safelight) 8%, transparent);
+}
+
+/* Text-only, for tertiary actions inside dense rows. */
+.btnBare {
+  background: none;
+  border: 0;
+  padding: 4px 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--bone-dim);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color var(--dur-micro) var(--ease-out);
+}
+
+.btnBare:hover:not(:disabled) {
+  color: var(--bone);
+}
+
+.btnSmall {
+  padding: 7px 12px;
+  font-size: 13px;
+}
+
+/* --- fields --------------------------------------------------------------- */
+
+.field {
+  display: block;
+  margin-bottom: 18px;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  color: var(--bone-dim);
+  margin-bottom: 7px;
+}
+
+.labelHint {
+  color: var(--bone-dim);
+  opacity: 0.65;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 13px;
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  border-radius: 3px;
+  color: var(--bone);
+  font-family: inherit;
+  font-size: 16px; /* 16px avoids the iOS zoom-on-focus jump */
+  transition:
+    border-color var(--dur-ui) var(--ease-out),
+    background-color var(--dur-ui) var(--ease-out);
+}
+
+.input::placeholder {
+  color: var(--bone-dim);
+  opacity: 0.5;
+}
+
+.input:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--bone) 22%, var(--ink-line));
+}
+
+.input:focus {
+  border-color: color-mix(in srgb, var(--bone) 42%, transparent);
+  background: color-mix(in srgb, var(--bone) 3%, var(--ink));
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--bone);
+}
+
+.input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hint {
+  margin: 7px 0 0;
+  font-size: 12px;
+  color: var(--bone-dim);
+}
+
+/* Errors are carried by text and a rule, never by colour — the one accent in
+   this system is reserved for selection marks and focus. */
+.errorNote {
+  margin: 0 0 18px;
+  padding: 2px 0 2px 12px;
+  border-left: 2px solid var(--bone);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bone);
+}

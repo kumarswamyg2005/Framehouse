@@ -114,7 +114,7 @@ export function PublishPanel({
           <span className={styles.linkValue}>{shareUrl}</span>
           <button
             type="button"
-            className={styles.ghost}
+            className="btn btnQuiet"
             onClick={() => {
               void navigator.clipboard?.writeText(shareUrl)
               onToast('Link copied')
@@ -122,7 +122,7 @@ export function PublishPanel({
           >
             Copy
           </button>
-          <a className={styles.ghost} href={shareUrl} target="_blank" rel="noreferrer">
+          <a className="btn btnQuiet" href={shareUrl} target="_blank" rel="noreferrer">
             Open
           </a>
         </div>
@@ -135,7 +135,7 @@ export function PublishPanel({
         <div className={styles.row} style={{ marginTop: 22 }}>
           <button
             type="button"
-            className={styles.ghost}
+            className="btn btnQuiet"
             onClick={() => {
               setDigits(Array(6).fill(''))
               setError(null)
@@ -145,10 +145,10 @@ export function PublishPanel({
           >
             Set a new PIN
           </button>
-          <button type="button" className={styles.ghost} onClick={unpublish} disabled={pending}>
+          <button type="button" className="btn btnQuiet" onClick={unpublish} disabled={pending}>
             {pending ? 'Working…' : 'Unpublish'}
           </button>
-          <button type="button" className={styles.ghost} onClick={onClose}>
+          <button type="button" className="btn btnQuiet" onClick={onClose}>
             Done
           </button>
         </div>
@@ -169,11 +169,11 @@ export function PublishPanel({
 
       {!changingPin && (
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="gallery-title">
+          <label className="label" htmlFor="gallery-title">
             Gallery title
           </label>
           <input
-            className={styles.input}
+            className="input"
             id="gallery-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -183,7 +183,7 @@ export function PublishPanel({
       )}
 
       <div className={styles.field}>
-        <span className={styles.label} id="pin-label">
+        <span className="label" id="pin-label">
           Access PIN — six digits
         </span>
         <div className={styles.pinRow} role="group" aria-labelledby="pin-label">
@@ -212,7 +212,7 @@ export function PublishPanel({
       <div className={styles.row}>
         <button
           type="button"
-          className={styles.solid}
+          className="btn btnPrimary"
           onClick={publish}
           disabled={pending || pin.length !== 6 || selectedCount === 0 || !title.trim()}
         >
@@ -220,7 +220,7 @@ export function PublishPanel({
         </button>
         <button
           type="button"
-          className={styles.ghost}
+          className="btn btnQuiet"
           onClick={() => (changingPin ? setChangingPin(false) : onClose())}
           disabled={pending}
         >
@@ -229,7 +229,7 @@ export function PublishPanel({
       </div>
 
       {error && (
-        <p className={styles.error} role="alert">
+        <p className="errorNote" role="alert">
           {error}
         </p>
       )}

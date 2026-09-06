@@ -86,7 +86,7 @@ export function TeamRoster({ eventId, members }: { eventId: string; members: Mem
               </span>
               <button
                 type="button"
-                className={styles.remove}
+                className="btnBare"
                 disabled={removing === user.id}
                 onClick={() => removeMember(user.id)}
               >
@@ -99,11 +99,11 @@ export function TeamRoster({ eventId, members }: { eventId: string; members: Mem
 
       <form className={styles.addRow} onSubmit={addMember} noValidate>
         <div className={styles.addField}>
-          <label className={styles.label} htmlFor="member-email">
+          <label className="label" htmlFor="member-email">
             Email
           </label>
           <input
-            className={styles.input}
+            className="input"
             id="member-email"
             name="email"
             type="email"
@@ -113,11 +113,11 @@ export function TeamRoster({ eventId, members }: { eventId: string; members: Mem
           />
         </div>
         <div className={styles.addField}>
-          <label className={styles.label} htmlFor="member-name">
+          <label className="label" htmlFor="member-name">
             Name <span style={{ opacity: 0.6 }}>if new</span>
           </label>
           <input
-            className={styles.input}
+            className="input"
             id="member-name"
             name="name"
             type="text"
@@ -125,13 +125,13 @@ export function TeamRoster({ eventId, members }: { eventId: string; members: Mem
             disabled={pending}
           />
         </div>
-        <button className={styles.submit} type="submit" disabled={pending}>
+        <button className="btn btnPrimary" type="submit" disabled={pending}>
           {pending ? 'Adding…' : 'Add to event'}
         </button>
       </form>
 
       {error && (
-        <p className={styles.error} role="alert">
+        <p className="errorNote" role="alert">
           {error}
         </p>
       )}

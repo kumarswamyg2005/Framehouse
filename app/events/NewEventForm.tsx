@@ -38,7 +38,7 @@ export function NewEventForm() {
 
   if (!open) {
     return (
-      <button type="button" className={styles.newToggle} onClick={() => setOpen(true)}>
+      <button type="button" className="btn btnPrimary" onClick={() => setOpen(true)}>
         New event
       </button>
     )
@@ -48,7 +48,7 @@ export function NewEventForm() {
     <>
       <button
         type="button"
-        className={`${styles.newToggle} ${styles.newToggleOpen}`}
+        className="btn btnQuiet"
         onClick={() => setOpen(false)}
       >
         Cancel
@@ -56,11 +56,11 @@ export function NewEventForm() {
 
       <form className={styles.form} onSubmit={onSubmit} noValidate>
         <div>
-          <label className={styles.label} htmlFor="event-name">
+          <label className="label" htmlFor="event-name">
             Event name
           </label>
           <input
-            className={styles.input}
+            className="input"
             id="event-name"
             name="name"
             type="text"
@@ -72,19 +72,19 @@ export function NewEventForm() {
         </div>
 
         <div>
-          <label className={styles.label} htmlFor="event-date">
+          <label className="label" htmlFor="event-date">
             Date
           </label>
           {/* Native date input: correct keyboard, correct locale, no dependency. */}
-          <input className={styles.input} id="event-date" name="date" type="date" disabled={pending} />
+          <input className="input" id="event-date" name="date" type="date" disabled={pending} />
         </div>
 
         <div className={styles.formWide}>
-          <label className={styles.label} htmlFor="event-description">
+          <label className="label" htmlFor="event-description">
             Description <span style={{ opacity: 0.6 }}>optional</span>
           </label>
           <textarea
-            className={styles.textarea}
+            className="input"
             id="event-description"
             name="description"
             rows={2}
@@ -94,11 +94,11 @@ export function NewEventForm() {
         </div>
 
         <div className={styles.formActions}>
-          <button className={styles.submit} type="submit" disabled={pending}>
+          <button className="btn btnPrimary" type="submit" disabled={pending}>
             {pending ? 'Creating…' : 'Create event'}
           </button>
           {error && (
-            <p className={styles.error} role="alert">
+            <p className="errorNote" role="alert">
               {error}
             </p>
           )}

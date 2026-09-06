@@ -102,12 +102,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <p className={styles.panelNote}>{copy.panelNote}</p>
 
           {mode === 'register' && (
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="name">
+            <div className="field">
+              <label className="label" htmlFor="name">
                 Your name
               </label>
               <input
-                className={styles.input}
+                className="input"
                 id="name"
                 name="name"
                 type="text"
@@ -120,12 +120,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
             </div>
           )}
 
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="email">
+          <div className="field">
+            <label className="label" htmlFor="email">
               Email
             </label>
             <input
-              className={styles.input}
+              className="input"
               id="email"
               name="email"
               type="email"
@@ -137,12 +137,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
             />
           </div>
 
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="password">
+          <div className="field">
+            <label className="label" htmlFor="password">
               Password
             </label>
             <input
-              className={styles.input}
+              className="input"
               id="password"
               name="password"
               type="password"
@@ -153,19 +153,19 @@ export function AuthForm({ mode }: { mode: Mode }) {
               aria-describedby={mode === 'register' ? 'password-hint' : undefined}
             />
             {mode === 'register' && (
-              <p className={styles.hint} id="password-hint">
+              <p className="hint" id="password-hint">
                 At least 10 characters.
               </p>
             )}
           </div>
 
           {error && (
-            <p className={styles.error} role="alert">
+            <p className="errorNote" role="alert">
               {error}
             </p>
           )}
 
-          <button className={styles.submit} type="submit" disabled={pending}>
+          <button className="btn btnPrimary" type="submit" disabled={pending}>
             {pending ? copy.pending : copy.submit}
           </button>
 
