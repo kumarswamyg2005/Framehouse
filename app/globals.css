@@ -1,0 +1,112 @@
+/* Tokens and the global floor. Component styling lives in co-located CSS
+   modules; nothing here is a utility class. See DESIGN.md. */
+
+:root {
+  /* Workspace — the judging surface. Dark so nothing biases perceived exposure. */
+  --ink: #12161c;
+  --ink-raised: #1a2029;
+  --ink-line: #2a3340;
+  --bone: #e8e6e1;
+  --bone-dim: #8b93a0;
+  --safelight: #c4553b;
+  --ok: #6e8f6b;
+
+  /* Client gallery — the print-viewing surface. */
+  --paper: #f2f2ef;
+  --paper-shade: #e4e3de;
+  --graphite: #1b1b19;
+  --graphite-dim: #6c6c66;
+
+  --gutter-sheet: 4px;
+  --gutter-gallery: 24px;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The gallery is a different surface, not a theme variant of the workspace. */
+body[data-surface='gallery'] {
+  background: var(--paper);
+  color: var(--graphite);
+  color-scheme: light;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 400;
+}
+
+.display {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+/* Mono is reserved for frame numbers. Nothing else. */
+.frameNumber {
+  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--bone-dim);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--safelight);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,138 @@
+// Framehouse — schema.
+//
+// Two rules shape everything below:
+//   1. Every photo row is reachable only through an Event, and every Event is
+//      reachable only through an ownership or membership edge. There is no
+//      table you can query for photos without first naming an actor.
+//   2. No secret is stored in a readable form: passwords and gallery PINs are
+//      argon2id hashes, client IPs are salted hashes.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum PhotoStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(MEMBER)
+  createdAt    DateTime @default(now())
+
+  ownedEvents    Event[]       @relation("EventOwner")
+  memberships    EventMember[]
+  uploadedPhotos Photo[]
+
+  @@index([email])
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  date        DateTime?
+  ownerId     String
+  createdAt   DateTime  @default(now())
+
+  owner   User          @relation("EventOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members EventMember[]
+  photos  Photo[]
+  gallery Gallery?
+
+  @@index([ownerId, createdAt])
+}
+
+model EventMember {
+  id      String   @id @default(cuid())
+  eventId String
+  userId  String
+  addedAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([userId])
+}
+
+model Photo {
+  id               String      @id @default(cuid())
+  eventId          String
+  uploadedById     String
+  originalFilename String
+  // events/{eventId}/{uuid}.{ext} — never derived from the uploaded filename.
+  storageKey       String      @unique
+  thumbnailKey     String?
+  mimeType         String
+  fileSize         Int
+  width            Int?
+  height           Int?
+  status           PhotoStatus @default(PENDING)
+  createdAt        DateTime    @default(now())
+
+  event        Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  uploadedBy   User           @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+  galleryLinks GalleryPhoto[]
+
+  @@index([eventId, createdAt])
+  @@index([eventId, uploadedById, createdAt])
+}
+
+model Gallery {
+  id          String    @id @default(cuid())
+  eventId     String    @unique
+  // 12-char nanoid. Unguessable, and carries no ordering information.
+  slug        String    @unique
+  title       String
+  // argon2id. Never returned by any handler, never logged.
+  pinHash     String
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  event  Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  photos GalleryPhoto[]
+}
+
+model GalleryPhoto {
+  galleryId String
+  photoId   String
+  position  Int
+
+  gallery Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  photo   Photo   @relation(fields: [photoId], references: [id], onDelete: Cascade)
+
+  @@id([galleryId, photoId])
+  @@index([galleryId, position])
+}
+
+// Keyed by slug rather than gallery id so attempts are recorded even for slugs
+// that do not resolve — otherwise the rate limiter would tell an attacker which
+// galleries exist.
+model PinAttempt {
+  id          String   @id @default(cuid())
+  gallerySlug String
+  ipHash      String
+  attemptedAt DateTime @default(now())
+  succeeded   Boolean
+
+  @@index([gallerySlug, ipHash, attemptedAt])
+}
