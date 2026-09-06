@@ -54,6 +54,19 @@ function api() {
   }
 }
 
+/* The entry-page clauses depend on the seeded demo gallery being published —
+   that is what DEMO_MODE surfaces. Check it up front and say so plainly, rather
+   than letting six clauses fail later with opaque click timeouts. */
+{
+  const probe = await fetch(`${BASE}/`).then((r) => r.text())
+  if (!probe.includes('What the client receives')) {
+    console.log('\n\x1b[31mThe entry page is not showing its demo card.\x1b[0m')
+    console.log('  The audit needs seeded demo data with a published gallery, and DEMO_MODE="true".')
+    console.log('  Run:  npm run db:seed\n')
+    process.exit(2)
+  }
+}
+
 console.log('Preparing an event large enough to exercise pagination…')
 const a = api()
 await a.call('/api/auth/register', { method: 'POST', body: JSON.stringify(LEAD) })
