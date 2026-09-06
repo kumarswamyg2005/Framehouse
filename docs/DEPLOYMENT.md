@@ -86,6 +86,12 @@ It prints the gallery URL. Put that, and the credentials, into the README's
 runtime, and leaving them in the dashboard is a plaintext password sitting
 somewhere it does not need to be.
 
+**`DEMO_MODE` is the switch that matters here.** Set it to `true` only for a
+deployment whose galleries are all fictional — it is what puts the demo sign-in
+credentials and the seeded gallery link on the entry page. For this submission
+that is correct and wanted. For a deployment with a real client's wedding on it,
+leave it unset; `npm run preflight` reports which state you are in.
+
 ---
 
 ## Smoke test
@@ -103,6 +109,8 @@ Do this from a device that has never visited the site, in a private window.
       you stay on the gallery.
 - [ ] Change the PIN from the workspace. The old one stops working immediately.
 - [ ] `curl -I` a photo URL with the query string stripped. It must 403.
+- [ ] The entry page shows demo credentials **only if you meant it** — check
+      `DEMO_MODE` matches the kind of deployment this is.
 
 ## If something is wrong
 

@@ -84,10 +84,29 @@ export async function authenticate(
 }
 
 /**
- * The published demo gallery, or null. Keyed to the seeded admin account so a
- * real deployment without seed data advertises nothing.
+ * Whether this deployment is allowed to advertise credentials on its front page.
+ *
+ * This is an explicit, single-purpose switch that defaults to OFF, and it is
+ * deliberately NOT inferred from SEED_* being present. Seed variables are meant
+ * to be removed after seeding — a manual step — so treating their presence as
+ * consent meant that forgetting to remove one would publish a gallery link and
+ * PIN belonging to a real client. Safety should not depend on remembering to
+ * tidy up.
+ */
+export function isDemoDeployment(): boolean {
+  return process.env.DEMO_MODE === 'true'
+}
+
+/**
+ * The published demo gallery, or null.
+ *
+ * Requires DEMO_MODE and requires the gallery to belong to the seeded demo
+ * account, so both the intent and the data have to line up before anything is
+ * shown. A production deployment returns null on the first condition alone.
  */
 export async function demoGallery() {
+  if (!isDemoDeployment()) return null
+
   const seededAdmin = process.env.SEED_ADMIN_EMAIL
   if (!seededAdmin) return null
 

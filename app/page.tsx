@@ -95,7 +95,7 @@ export default async function Home() {
   const [actor, gallery] = await Promise.all([getActor(), demoGallery()])
   const repoUrl = process.env.NEXT_PUBLIC_REPO_URL
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-  // Seeded demo data only — this block does not render without it.
+  // Only reached when DEMO_MODE is on; see isDemoDeployment().
   const demoPin = process.env.SEED_GALLERY_PIN ?? '482917'
 
   return (
@@ -183,15 +183,31 @@ export default async function Home() {
                       {(appUrl || '').replace(/^https?:\/\//, '')}/g/{gallery.slug}
                     </span>
 
+                    {/*
+                      Masked, on purpose. The note under this card says a client
+                      receives the link and the PIN separately — printing both
+                      here would contradict it, and it would mean the front page
+                      of any deployment that forgot to unset a variable was
+                      handing out working access. The demo PIN lives in one
+                      place: the credentials block below, which says plainly
+                      that it is seeded data.
+                    */}
                     <div className={styles.passPinRow}>
                       <span className={styles.passPinLabel}>PIN</span>
-                      <span className={styles.passDigits} aria-label={`PIN ${demoPin}`}>
-                        {demoPin.split('').map((digit, i) => (
-                          <span className={styles.passDigit} key={i} aria-hidden="true">
-                            {digit}
+                      <span className={styles.passDigits} aria-label="PIN, sent separately">
+                        {Array.from({ length: 6 }, (_, i) => (
+                          <span
+                            className={`${styles.passDigit} ${styles.passDigitMasked}`}
+                            key={i}
+                            aria-hidden="true"
+                          >
+                            •
                           </span>
                         ))}
                       </span>
+                      <a className={styles.passPinLink} href="#try">
+                        Demo PIN below
+                      </a>
                     </div>
 
                     <Link
@@ -308,7 +324,7 @@ export default async function Home() {
                         {gallery.title}
                       </Link>
                       {'  ·  PIN '}
-                      <span className={styles.valueStrong}>482917</span>
+                      <span className={styles.valueStrong}>{demoPin}</span>
                     </span>
                   </div>
                 </div>

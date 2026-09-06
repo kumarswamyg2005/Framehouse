@@ -79,6 +79,14 @@ for (const key of ['SEED_ADMIN_PASSWORD', 'SEED_MEMBER_PASSWORD', 'SEED_GALLERY_
   if (process.env[key]) warn(`${key} is set — remove it from production once seeded`)
 }
 
+if (process.env.DEMO_MODE === 'true') {
+  warn('DEMO_MODE is on — the entry page will publish demo sign-in credentials')
+  warn('  and a link to the seeded gallery. Correct for a demo deployment;')
+  warn('  unset it on anything with real clients on it.')
+} else {
+  pass('DEMO_MODE is off — the entry page advertises nothing')
+}
+
 console.log('\nDatabase')
 const prisma = new PrismaClient()
 try {

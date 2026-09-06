@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { prisma } from '@/lib/db/prisma'
 import { requireEventAccess, requireEventOwner, requirePhotoAccess } from '@/lib/auth/policy'
 import { addMember, getEventDetail, listEvents, removeMember } from '@/lib/data/events'
@@ -167,5 +167,48 @@ describe('a member of one event is not a member of another', () => {
 
     const visible = await listEvents(aliceMember)
     expect(visible.map((e) => e.id)).toEqual([aliceEvent.id])
+  })
+})
+
+describe('the entry page never advertises a real gallery', () => {
+  const env = { ...process.env }
+  afterEach(() => {
+    process.env = { ...env }
+  })
+
+  it('shows nothing when DEMO_MODE is unset, even with seed variables present', async () => {
+    const { demoGallery } = await import('@/lib/data/accounts')
+    const { alice } = await twoStudios()
+
+    // Exactly the shape of the footgun this guards: a real deployment that
+    // seeded once and never removed the seed variables.
+    process.env.SEED_ADMIN_EMAIL = alice.email
+    delete process.env.DEMO_MODE
+
+    expect(await demoGallery()).toBeNull()
+  })
+
+  it('shows nothing when DEMO_MODE is anything other than the string "true"', async () => {
+    const { demoGallery } = await import('@/lib/data/accounts')
+    const { alice } = await twoStudios()
+    process.env.SEED_ADMIN_EMAIL = alice.email
+
+    for (const value of ['1', 'yes', 'TRUE', 'on', '']) {
+      process.env.DEMO_MODE = value
+      expect(await demoGallery()).toBeNull()
+    }
+  })
+
+  it('shows the gallery only when the switch is on and the data is seeded', async () => {
+    const { demoGallery } = await import('@/lib/data/accounts')
+    const { alice, slug } = await twoStudios()
+
+    process.env.DEMO_MODE = 'true'
+    process.env.SEED_ADMIN_EMAIL = alice.email
+    expect(await demoGallery()).toMatchObject({ slug })
+
+    // Same switch, but the account it names does not own anything published.
+    process.env.SEED_ADMIN_EMAIL = 'someone-else@nowhere.test'
+    expect(await demoGallery()).toBeNull()
   })
 })

@@ -54,9 +54,20 @@ nobody has been authorized on the entry page. A hero image would have meant
 carving an exception into the first invariant, so the page is typographic and the
 photographs start one screen in.
 
-The demo credentials block only renders when `SEED_ADMIN_EMAIL` is set and that
-account owns a published gallery, so a real deployment never advertises a
-client's gallery slug.
+The demo credentials block renders only when `DEMO_MODE="true"` **and** the
+seeded admin account owns a published gallery. Both the intent and the data have
+to line up; a production deployment fails the first condition on its own.
+
+That switch is deliberately separate from the `SEED_*` variables rather than
+inferred from them. Seed variables are meant to be removed after seeding, which
+is a manual step, and treating their presence as consent would have meant that
+forgetting one published a real client's gallery link on the front page. Safety
+should not depend on remembering to tidy up.
+
+The card in the hero shows the *shape* of a delivery — title, link, and six
+masked digits — and never the PIN itself, because the note beside it says a
+client receives the link and the PIN separately. Printing both together would
+have contradicted the one sentence explaining the feature.
 
 ## What each role can do
 
@@ -389,6 +400,7 @@ SEED_GALLERY_PIN="482917"
 | `R2_ENDPOINT` | no | Overrides the derived endpoint. Set to `http://localhost:9000` for MinIO. |
 | `NEXT_PUBLIC_APP_URL` | yes | Absolute origin, no trailing slash. Used to build shareable gallery links. |
 | `NEXT_PUBLIC_REPO_URL` | no | Linked from the entry page footer. |
+| `DEMO_MODE` | no | `"true"` makes the entry page show demo credentials and link the seeded gallery. **Leave unset on any deployment with real clients.** |
 | `SEED_ADMIN_EMAIL` | seed only | Defaults to `admin@demo.test`. |
 | `SEED_ADMIN_PASSWORD` | seed only | Never set in production. |
 | `SEED_MEMBER_PASSWORD` | seed only | Never set in production. |

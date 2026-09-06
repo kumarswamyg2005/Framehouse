@@ -379,6 +379,23 @@
   justify-content: center;
 }
 
+.passDigitMasked {
+  color: var(--bone-dim);
+  opacity: 0.55;
+}
+
+.passPinLink {
+  font-size: 12px;
+  color: var(--bone-dim);
+  text-decoration: none;
+  box-shadow: inset 0 -1px 0 var(--ink-line);
+  transition: color var(--dur-ui) var(--ease-out);
+}
+
+.passPinLink:hover {
+  color: var(--bone);
+}
+
 .passNote {
   margin: 14px 0 0;
   font-size: 12px;
