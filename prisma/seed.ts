@@ -35,7 +35,44 @@ async function fetchSourceImage(index: number): Promise<Uint8Array> {
   return new Uint8Array(await res.arrayBuffer())
 }
 
+/**
+ * This script deletes every row in every table before it writes. That is correct
+ * for a demo workspace and catastrophic anywhere else, so it refuses to run
+ * against a host that is not local unless it is told to explicitly.
+ *
+ * The guard exists because `neon link` and `neon deploy` both rewrite
+ * DATABASE_URL in .env to the production branch as a side effect. Without this,
+ * a routine `npm run db:seed` after either command would wipe production.
+ */
+function assertSafeToSeed(): void {
+  const url = process.env.DATABASE_URL ?? ''
+  const host = (() => {
+    try {
+      return new URL(url).hostname
+    } catch {
+      return ''
+    }
+  })()
+
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1'
+  if (isLocal || process.env.ALLOW_REMOTE_SEED === 'true') return
+
+  throw new Error(
+    [
+      `Refusing to seed: DATABASE_URL points at "${host}", which is not local.`,
+      '',
+      'This script truncates every table before it writes.',
+      'If you genuinely mean to seed a remote database, run:',
+      '',
+      '  ALLOW_REMOTE_SEED=true npm run db:seed',
+      '',
+    ].join('\n')
+  )
+}
+
 async function main() {
+  assertSafeToSeed()
+
   const adminEmail = process.env.SEED_ADMIN_EMAIL ?? 'admin@demo.test'
   const adminPassword = required('SEED_ADMIN_PASSWORD')
   const memberPassword = required('SEED_MEMBER_PASSWORD')
