@@ -20,7 +20,8 @@
     "storage:init": "node scripts/create-buckets.mjs",
     "setup": "docker compose up -d && npm run db:deploy && npm run storage:init && npm run db:seed",
     "preflight": "node scripts/preflight.mjs",
-    "acceptance": "node scripts/acceptance.mjs"
+    "acceptance": "node scripts/acceptance.mjs",
+    "audit": "node scripts/ui-audit.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

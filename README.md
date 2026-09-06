@@ -420,6 +420,7 @@ SEED_GALLERY_PIN="482917"
 | `npm run db:seed` | Reseed the demo workspace |
 | `npm run preflight` | Check env, database and storage before a deploy — including that the bucket refuses an unsigned read |
 | `npm run acceptance` | Walk every clause of the brief against a running instance, API and browser. `BASE=https://… npm run acceptance` runs it against the deployment |
+| `npm run audit` | Page-by-page UI walk: every button, field, keyboard shortcut, empty and error state, as each role |
 
 ---
 
@@ -429,7 +430,14 @@ SEED_GALLERY_PIN="482917"
 npm test           # 85 integration tests
 npm run test:e2e   # 1 end-to-end pass through the whole workflow
 npm run acceptance # 86 checks, one per clause of the brief
+npm run audit      # 94 checks, every control on every page as each role
 ```
+
+`acceptance` proves the specification is satisfied. `audit` proves the interface
+actually does what it says: it seeds an event large enough to exercise both
+pagination controls, then operates every button, field, keyboard shortcut and
+error state on every route, as lead, as member and as customer. Both take `BASE`
+so they can be pointed at a deployment.
 
 `npm run acceptance` is the one to run against a deployment. It exercises three
 roles and two separate studios through the real HTTP API and a real browser,
