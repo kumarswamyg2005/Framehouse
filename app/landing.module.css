@@ -1,0 +1,289 @@
+/* The entry page. Type-only, deliberately: see the note in page.tsx. */
+
+.page {
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 0 24px 96px;
+}
+
+.bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 0 17px;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.wordmark {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--bone);
+}
+
+.barLink {
+  font-size: 12px;
+  color: var(--bone-dim);
+  text-decoration: none;
+}
+
+.barLink:hover {
+  color: var(--bone);
+}
+
+/* --- hero ---------------------------------------------------------------- */
+
+.hero {
+  padding: 96px 0 88px;
+  max-width: 660px;
+}
+
+.title {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--bone);
+}
+
+.lede {
+  margin: 20px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--bone-dim);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 32px;
+}
+
+.solid {
+  display: inline-block;
+  background: var(--bone);
+  color: var(--ink);
+  border: 1px solid var(--bone);
+  border-radius: 2px;
+  padding: 11px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.solid:hover {
+  opacity: 0.88;
+}
+
+.ghost {
+  display: inline-block;
+  background: none;
+  color: var(--bone-dim);
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  padding: 11px 18px;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.ghost:hover {
+  color: var(--bone);
+  border-color: #38424f;
+}
+
+/* --- sections ------------------------------------------------------------ */
+
+.section {
+  padding: 56px 0 0;
+  border-top: 1px solid var(--ink-line);
+}
+
+.sectionTitle {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-size: 28px;
+  line-height: 1.1;
+  color: var(--bone);
+  margin: 0 0 8px;
+}
+
+.sectionNote {
+  margin: 0 0 32px;
+  font-size: 14px;
+  color: var(--bone-dim);
+  max-width: 58ch;
+}
+
+/* Ledger rows, not cards: hairlines and generous space, no shadows. */
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--ink-line);
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 24px;
+  padding: 22px 2px 24px;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.stepWho {
+  font-size: 14px;
+  color: var(--bone);
+}
+
+.stepRole {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--bone-dim);
+  opacity: 0.8;
+}
+
+.stepWhat {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bone-dim);
+  max-width: 62ch;
+}
+
+.stepWhat strong {
+  color: var(--bone);
+  font-weight: 400;
+}
+
+/* --- demo ---------------------------------------------------------------- */
+
+.demo {
+  margin-top: 8px;
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  background: var(--ink-raised);
+  padding: 26px 26px 28px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  text-align: left;
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--bone-dim);
+  padding: 0 16px 10px 0;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.table td {
+  padding: 11px 16px 11px 0;
+  border-bottom: 1px solid var(--ink-line);
+  color: var(--bone-dim);
+  vertical-align: baseline;
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+.who {
+  color: var(--bone);
+  white-space: nowrap;
+}
+
+/* Mono is for literal values you copy or type, never for labels. */
+.value {
+  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--bone);
+  user-select: all;
+}
+
+.demoFoot {
+  margin: 22px 0 0;
+  font-size: 12px;
+  color: var(--bone-dim);
+  line-height: 1.6;
+  max-width: 64ch;
+}
+
+.demoLink {
+  color: var(--bone);
+}
+
+/* --- built --------------------------------------------------------------- */
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0 40px;
+  border-top: 1px solid var(--ink-line);
+}
+
+.fact {
+  padding: 20px 0 22px;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.factTitle {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: var(--bone);
+}
+
+.factBody {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bone-dim);
+}
+
+.footer {
+  padding: 44px 0 0;
+  font-size: 12px;
+  color: var(--bone-dim);
+  line-height: 1.7;
+}
+
+.footer a {
+  color: var(--bone-dim);
+}
+
+.footer a:hover {
+  color: var(--bone);
+}
+
+@media (max-width: 720px) {
+  .hero {
+    padding: 56px 0 48px;
+  }
+
+  .title {
+    font-size: 34px;
+  }
+
+  .step {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .facts {
+    grid-template-columns: 1fr;
+  }
+
+  .demo {
+    padding: 20px 18px 22px;
+  }
+
+  .table th:nth-child(3),
+  .table td:nth-child(3) {
+    display: none;
+  }
+}

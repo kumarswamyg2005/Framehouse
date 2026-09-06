@@ -42,6 +42,22 @@ assigned to nothing.
 
 ---
 
+## The entry page
+
+Opening the deployed URL lands on a page that explains what the product is, walks
+the shoot through all three roles, and lists the demo credentials — so an
+evaluator can get in without reading this file first.
+
+It has no photographs on it, deliberately. Every image in this application is a
+presigned URL minted after an authorization check that names who is asking, and
+nobody has been authorized on the entry page. A hero image would have meant
+carving an exception into the first invariant, so the page is typographic and the
+photographs start one screen in.
+
+The demo credentials block only renders when `SEED_ADMIN_EMAIL` is set and that
+account owns a published gallery, so a real deployment never advertises a
+client's gallery slug.
+
 ## What each role can do
 
 **Lead (admin).** Registers, creates events, adds team members by email — the
@@ -354,6 +370,7 @@ SEED_GALLERY_PIN="482917"
 | `R2_BUCKET` | yes | Bucket name. Must be private. |
 | `R2_ENDPOINT` | no | Overrides the derived endpoint. Set to `http://localhost:9000` for MinIO. |
 | `NEXT_PUBLIC_APP_URL` | yes | Absolute origin, no trailing slash. Used to build shareable gallery links. |
+| `NEXT_PUBLIC_REPO_URL` | no | Linked from the entry page footer. |
 | `SEED_ADMIN_EMAIL` | seed only | Defaults to `admin@demo.test`. |
 | `SEED_ADMIN_PASSWORD` | seed only | Never set in production. |
 | `SEED_MEMBER_PASSWORD` | seed only | Never set in production. |
@@ -494,6 +511,7 @@ for the lead to pass on by hand.
 
 ```
 app/
+  page.tsx                   entry page — what it is, how it works, demo logins
   api/                       route handlers, zod-validated, one error envelope
   events/                    the workspace — contact sheet, uploader, publishing
   g/[slug]/                  the client gallery — PIN gate, masonry, lightbox
