@@ -22,12 +22,14 @@ type Props = {
 export function Loupe({ photos, index, onIndex, onClose, onDelete, deleting }: Props) {
   const photo = photos[index]
   const [url, setUrl] = useState<string | null>(null)
+  const [fullLoaded, setFullLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!photo) return
     let cancelled = false
     setUrl(null)
+    setFullLoaded(false)
     setError(null)
 
     fetch(`/api/photos/${photo.id}/url`)
@@ -74,10 +76,31 @@ export function Loupe({ photos, index, onIndex, onClose, onDelete, deleting }: P
       <div className={styles.stage}>
         {error ? (
           <p className={styles.loading}>{error}</p>
-        ) : url ? (
-          <img src={url} alt={photo.filename} />
         ) : (
-          <p className={styles.loading}>Loading the full frame…</p>
+          <>
+            {/* The thumbnail is already decoded, so it appears instantly and
+                gives the transition something real to morph into. The full
+                frame fades over it when it arrives. */}
+            {photo.thumbnailUrl && (
+              <img
+                key={`${photo.id}-preview`}
+                src={photo.thumbnailUrl}
+                alt=""
+                aria-hidden="true"
+                className={fullLoaded ? styles.previewGone : undefined}
+                style={{ viewTransitionName: 'photo-hero' }}
+              />
+            )}
+            {url && (
+              <img
+                key={`${photo.id}-full`}
+                src={url}
+                alt={photo.filename}
+                className={`${styles.full} photoFade ${fullLoaded ? 'photoFadeIn' : ''}`}
+                onLoad={() => setFullLoaded(true)}
+              />
+            )}
+          </>
         )}
       </div>
 

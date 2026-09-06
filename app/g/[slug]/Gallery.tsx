@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useCloseOnBack } from '@/components/useCloseOnBack'
+import { withViewTransition } from '@/components/useViewTransition'
 import styles from './gallery.module.css'
 
 export type GalleryPhoto = {
@@ -41,6 +42,39 @@ export function Gallery({
   nextCursor: firstCursor,
 }: Props) {
   const [open, setOpen] = useState<number | null>(null)
+  // Which thumbnails have decoded, so each can fade up on arrival rather than
+  // the grid popping in raggedly.
+  const [loaded, setLoaded] = useState<Set<string>>(new Set())
+  // The grid's <img> elements, so the shared transition name can be handed to
+  // and taken back from the exact frame being opened.
+  const thumbs = useRef<Map<string, HTMLImageElement>>(new Map())
+
+  const openAt = (index: number) => {
+    const el = thumbs.current.get(photos[index]!.id)
+    if (el) el.style.viewTransitionName = 'photo-hero'
+    withViewTransition(
+      () => setOpen(index),
+      // The overlay now owns the name; the grid must let go of it before the
+      // second snapshot, or the browser sees a duplicate and aborts.
+      () => {
+        if (el) el.style.viewTransitionName = ''
+      }
+    )
+  }
+
+  const closeLightbox = () => {
+    const current = open === null ? undefined : photos[open]
+    const el = current ? thumbs.current.get(current.id) : undefined
+    withViewTransition(
+      () => setOpen(null),
+      () => {
+        if (el) el.style.viewTransitionName = 'photo-hero'
+      },
+      () => {
+        if (el) el.style.viewTransitionName = ''
+      }
+    )
+  }
   const [photos, setPhotos] = useState(firstPage)
   const [cursor, setCursor] = useState(firstCursor)
   const [error, setError] = useState(false)
@@ -148,7 +182,7 @@ export function Gallery({
               // 20ms stagger, capped so the last frame of a large gallery is not
               // held back by seconds of accumulated delay.
               style={{ animationDelay: `${Math.min(index, 24) * 20}ms` }}
-              onClick={() => setOpen(index)}
+              onClick={() => openAt(index)}
               aria-label={`Open ${photo.alt}, frame ${index + 1} of ${total}`}
             >
               <img
@@ -158,6 +192,12 @@ export function Gallery({
                 decoding="async"
                 width={photo.width ?? undefined}
                 height={photo.height ?? undefined}
+                className={`photoFade ${loaded.has(photo.id) ? 'photoFadeIn' : ''}`}
+                onLoad={() => setLoaded((prev) => new Set(prev).add(photo.id))}
+                ref={(el) => {
+                  if (el) thumbs.current.set(photo.id, el)
+                  else thumbs.current.delete(photo.id)
+                }}
               />
             </button>
           ))}
@@ -197,7 +237,7 @@ export function Gallery({
           photos={photos}
           index={open}
           onIndex={setOpen}
-          onClose={() => setOpen(null)}
+          onClose={closeLightbox}
         />
       )}
     </div>
@@ -219,6 +259,7 @@ function Lightbox({
 }) {
   const photo = photos[index]!
   const [url, setUrl] = useState<string | null>(null)
+  const [fullLoaded, setFullLoaded] = useState(false)
   const [error, setError] = useState(false)
 
   /**
@@ -229,6 +270,7 @@ function Lightbox({
   useEffect(() => {
     let cancelled = false
     setUrl(null)
+    setFullLoaded(false)
     setError(false)
 
     fetch(`/api/public/gallery/${slug}/photos/${photo.id}/url`)
@@ -285,10 +327,34 @@ function Lightbox({
       <div className={styles.lightboxStage}>
         {error ? (
           <p className={styles.lbLoading}>That photograph could not be loaded. Try again shortly.</p>
-        ) : url ? (
-          <img src={url} alt={photo.alt} />
         ) : (
-          <div className={styles.lbSkeleton} role="status" aria-label="Loading the photograph" />
+          <>
+            {/*
+              The thumbnail is already decoded and in cache, so it appears
+              instantly and gives the view transition something real to morph
+              into. The full-resolution file fades over it when it arrives —
+              which is why there is no skeleton here any more.
+            */}
+            <img
+              key={`${photo.id}-preview`}
+              src={photo.thumbnailUrl}
+              alt=""
+              aria-hidden="true"
+              className={`${styles.lightboxImage} ${fullLoaded ? styles.lightboxPreviewGone : ''}`}
+              style={{ viewTransitionName: 'photo-hero' }}
+            />
+            {url && (
+              <img
+                key={`${photo.id}-full`}
+                src={url}
+                alt={photo.alt}
+                className={`${styles.lightboxImage} ${styles.lightboxFull} photoFade ${
+                  fullLoaded ? 'photoFadeIn' : ''
+                }`}
+                onLoad={() => setFullLoaded(true)}
+              />
+            )}
+          </>
         )}
       </div>
 

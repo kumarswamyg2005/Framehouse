@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { withViewTransition } from '@/components/useViewTransition'
 import { Loupe } from './Loupe'
 import styles from './sheet.module.css'
 
@@ -45,7 +46,39 @@ export function ContactSheet({
   const [loadingMore, setLoadingMore] = useState(false)
   const [hintsDismissed, setHintsDismissed] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState<Set<string>>(new Set())
   const gridRef = useRef<HTMLUListElement>(null)
+  const thumbs = useRef<Map<string, HTMLImageElement>>(new Map())
+
+  /** Hands the shared transition name to the frame being opened, and takes it
+   *  back afterwards. See components/useViewTransition.ts. */
+  const openLoupe = useCallback(
+    (index: number) => {
+      const el = thumbs.current.get(photos[index]!.id)
+      if (el) el.style.viewTransitionName = 'photo-hero'
+      withViewTransition(
+        () => setLoupeIndex(index),
+        () => {
+          if (el) el.style.viewTransitionName = ''
+        }
+      )
+    },
+    [photos]
+  )
+
+  const closeLoupe = useCallback(() => {
+    const current = loupeIndex === null ? undefined : photos[loupeIndex]
+    const el = current ? thumbs.current.get(current.id) : undefined
+    withViewTransition(
+      () => setLoupeIndex(null),
+      () => {
+        if (el) el.style.viewTransitionName = 'photo-hero'
+      },
+      () => {
+        if (el) el.style.viewTransitionName = ''
+      }
+    )
+  }, [loupeIndex, photos])
   const lastToggled = useRef<number | null>(null)
 
   const toggle = useCallback(
@@ -179,13 +212,13 @@ export function ContactSheet({
                 aria-disabled={photo.pending || undefined}
                 onClick={(event) => {
                   if (photo.pending) return
-                  if (!canSelect) return setLoupeIndex(index)
+                  if (!canSelect) return openLoupe(index)
                   if (event.shiftKey) return selectRange(index)
                   lastToggled.current = index
                   toggle(photo.id)
                 }}
                 onDoubleClick={() => {
-                  if (!photo.pending) setLoupeIndex(index)
+                  if (!photo.pending) openLoupe(index)
                 }}
               >
                 {/* Thumbnails are presigned R2 URLs, never public ones. */}
@@ -195,6 +228,12 @@ export function ContactSheet({
                     alt={photo.filename}
                     loading="lazy"
                     decoding="async"
+                    className={`photoFadeQuick ${loaded.has(photo.id) ? 'photoFadeIn' : ''}`}
+                    onLoad={() => setLoaded((prev) => new Set(prev).add(photo.id))}
+                    ref={(el) => {
+                      if (el) thumbs.current.set(photo.id, el)
+                      else thumbs.current.delete(photo.id)
+                    }}
                   />
                 ) : (
                   <span className={styles.pendingFrame} aria-hidden="true" />
@@ -248,7 +287,7 @@ export function ContactSheet({
           photos={photos}
           index={loupeIndex}
           onIndex={setLoupeIndex}
-          onClose={() => setLoupeIndex(null)}
+          onClose={closeLoupe}
           onDelete={remove}
           deleting={busy}
         />

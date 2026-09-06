@@ -452,3 +452,80 @@ img {
   line-height: 1.5;
   color: var(--bone);
 }
+
+/* ===========================================================================
+   View transitions.
+
+   The thumbnail and the lightbox image share a name, so the browser tweens one
+   into the other rather than cross-fading two unrelated rectangles. Everything
+   else on the page holds still during the transition, which is what makes the
+   move read as "this frame opened" rather than as "the page changed".
+   =========================================================================== */
+
+::view-transition-old(photo-hero),
+::view-transition-new(photo-hero) {
+  /* The frame is cropped in the grid and contained in the lightbox; without
+     this the browser stretches one aspect ratio into the other. */
+  object-fit: contain;
+  animation-duration: var(--dur-overlay);
+  animation-timing-function: var(--ease-out-expo);
+}
+
+::view-transition-group(photo-hero) {
+  animation-duration: var(--dur-overlay);
+  animation-timing-function: var(--ease-out-expo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Image arrival.
+
+   Photographs decode at different moments, so a grid of them pops in raggedly.
+   Fading each one up as it decodes turns that into the sheet filling in, which
+   is both calmer and closer to what a print coming up actually looks like.
+   --------------------------------------------------------------------------- */
+.photoFade {
+  opacity: 0;
+  transition:
+    opacity 420ms var(--ease-out),
+    filter 420ms var(--ease-out);
+  filter: blur(6px);
+}
+
+.photoFadeIn {
+  opacity: 1;
+  filter: none;
+}
+
+/* The tool's variant: shorter, and no blur. A lead culling 1,250 frames wants
+   them to arrive, not to perform. */
+.photoFadeQuick {
+  opacity: 0;
+  transition: opacity 220ms var(--ease-out);
+}
+
+.photoFadeQuick.photoFadeIn {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photoFadeQuick {
+    opacity: 1;
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photoFade {
+    opacity: 1;
+    filter: none;
+    transition: none;
+  }
+}
