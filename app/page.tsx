@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { getActor } from '@/lib/auth/session'
-import { prisma } from '@/lib/db/prisma'
+import { demoGallery } from '@/lib/data/accounts'
 import styles from './landing.module.css'
 
 export const dynamic = 'force-dynamic'
@@ -90,16 +90,6 @@ const FACTS = [
     body: 'Every query takes the actor and spreads a scope from a single policy module. Nothing in this codebase fetches broadly and filters afterwards.',
   },
 ]
-
-async function demoGallery() {
-  const seededAdmin = process.env.SEED_ADMIN_EMAIL
-  if (!seededAdmin) return null
-
-  return prisma.gallery.findFirst({
-    where: { isPublished: true, event: { owner: { email: seededAdmin } } },
-    select: { slug: true, title: true, _count: { select: { photos: true } } },
-  })
-}
 
 export default async function Home() {
   const [actor, gallery] = await Promise.all([getActor(), demoGallery()])

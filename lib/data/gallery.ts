@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import type { z } from 'zod'
 import type { Actor } from '@/lib/auth/policy'
 import { publishedGalleryWhere, requireEventOwner, requireGalleryPhoto } from '@/lib/auth/policy'
@@ -32,31 +33,66 @@ export async function saveSelection(
   const ownedIds = new Set(owned.map((p) => p.id))
   const ordered = input.photoIds.filter((id) => ownedIds.has(id))
 
-  return prisma.$transaction(async (tx) => {
-    const gallery = await tx.gallery.upsert({
-      where: { eventId },
-      create: {
+  // The gallery row is resolved OUTSIDE the transaction, and the placeholder PIN
+  // hash is only computed when one is actually being created.
+  //
+  // This used to be a single upsert. JavaScript builds the `create` payload
+  // eagerly, so `await hashSecret(...)` — argon2id, 19 MB and tens of
+  // milliseconds — ran on every autosave, including the overwhelming majority
+  // where the gallery already existed, and it ran while holding a transaction
+  // open. Selection autosave fires on a 700 ms debounce as a lead works through
+  // a sheet, so that was the hot path.
+  const gallery = await resolveGallery(eventId, input.title)
+
+  // Only the selection itself needs to be atomic: a client must never see a
+  // half-replaced gallery.
+  await prisma.$transaction([
+    prisma.galleryPhoto.deleteMany({ where: { galleryId: gallery.id } }),
+    prisma.galleryPhoto.createMany({
+      data: ordered.map((photoId, position) => ({ galleryId: gallery.id, photoId, position })),
+    }),
+  ])
+
+  return { id: gallery.id, slug: gallery.slug, title: gallery.title, selected: ordered.length }
+}
+
+type GalleryStub = { id: string; slug: string; title: string }
+
+const gallerySelect = { id: true, slug: true, title: true } as const
+
+async function resolveGallery(eventId: string, title: string): Promise<GalleryStub> {
+  const existing = await prisma.gallery.findUnique({ where: { eventId }, select: gallerySelect })
+
+  if (existing) {
+    if (existing.title === title) return existing
+    return prisma.gallery.update({
+      where: { id: existing.id },
+      data: { title },
+      select: gallerySelect,
+    })
+  }
+
+  try {
+    return await prisma.gallery.create({
+      data: {
         eventId,
         slug: buildGallerySlug(),
-        title: input.title,
-        // A placeholder that can never be produced by the 6-digit PIN schema,
-        // so an unpublished gallery cannot be opened by guessing.
+        title,
+        // A placeholder that the six-digit PIN schema can never produce, so an
+        // unpublished gallery cannot be opened by guessing.
         pinHash: await hashSecret(crypto.randomUUID()),
       },
-      update: { title: input.title },
+      select: gallerySelect,
     })
-
-    // Replace wholesale: this is a set, and diffing it would be more code for
-    // the same result on a table this small.
-    await tx.galleryPhoto.deleteMany({ where: { galleryId: gallery.id } })
-    if (ordered.length > 0) {
-      await tx.galleryPhoto.createMany({
-        data: ordered.map((photoId, position) => ({ galleryId: gallery.id, photoId, position })),
-      })
+  } catch (error) {
+    // Two autosaves can race on the first ever selection. Gallery.eventId is
+    // unique, so one loses; re-read rather than failing the lead's click.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const raced = await prisma.gallery.findUnique({ where: { eventId }, select: gallerySelect })
+      if (raced) return raced
     }
-
-    return { id: gallery.id, slug: gallery.slug, title: gallery.title, selected: ordered.length }
-  })
+    throw error
+  }
 }
 
 /** Resolves a gallery through its event's ownership. Never by id alone. */
