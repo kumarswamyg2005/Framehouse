@@ -22,7 +22,7 @@ Built for the TrizenAI full-stack internship challenge.
 | | |
 |---|---|
 | **Application** | _fill in after deployment_ |
-| **Repository** | _fill in_ |
+| **Repository** | https://github.com/kumarswamyg2005/Framehouse |
 
 **Demo credentials**
 
