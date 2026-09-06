@@ -74,3 +74,32 @@ describe('token audience separation', () => {
     await expect(verifySessionToken(forged)).resolves.toBeNull()
   })
 })
+
+describe('secrets never reach a response body', () => {
+  it('omits passwordHash from every actor-facing read', async () => {
+    const { getEventDetail, listEvents } = await import('@/lib/data/events')
+    const { makeEvent, makeUser, resetDatabase } = await import('./helpers')
+
+    await resetDatabase()
+    const admin = await makeUser('ADMIN', 'a-real-password-here')
+    const member = await makeUser('MEMBER', 'a-real-password-here')
+    const event = await makeEvent(admin, [member])
+
+    for (const payload of [
+      await listEvents(admin),
+      await listEvents(member),
+      await getEventDetail(admin, event.id),
+      await getEventDetail(member, event.id),
+    ]) {
+      const serialised = JSON.stringify(payload)
+      expect(serialised).not.toContain('passwordHash')
+      expect(serialised).not.toContain('a-real-password-here')
+      expect(serialised).not.toContain('$argon2id$')
+    }
+  })
+
+  it('keeps the actor shape free of a password field', async () => {
+    const { getActorFieldsForTest } = await import('./helpers')
+    expect(getActorFieldsForTest()).toEqual(['id', 'email', 'name', 'role'])
+  })
+})

@@ -52,3 +52,52 @@ export const addMemberSchema = z.object({
   // Only used when the email does not already belong to an account.
   name: z.string().trim().min(1).max(120).optional(),
 })
+
+/* --- photos ------------------------------------------------------------- */
+
+export const ALLOWED_UPLOAD_MIME = ['image/jpeg', 'image/png', 'image/webp'] as const
+
+export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+
+export const presignUploadSchema = z.object({
+  filename: z.string().trim().min(1).max(255),
+  mimeType: z.enum(ALLOWED_UPLOAD_MIME, {
+    errorMap: () => ({ message: 'Only JPEG, PNG and WebP images can be uploaded.' }),
+  }),
+  fileSize: z
+    .number()
+    .int()
+    .positive('That file is empty.')
+    .max(MAX_UPLOAD_BYTES, 'That file is larger than 25 MB.'),
+})
+
+export const confirmUploadSchema = z.object({
+  storageKey: z.string().min(1).max(512),
+  filename: z.string().trim().min(1).max(255),
+})
+
+export const listPhotosSchema = z.object({
+  cursor: z.string().min(1).max(64).optional(),
+  limit: z.coerce.number().int().min(1).max(120).default(60),
+})
+
+/* --- galleries ---------------------------------------------------------- */
+
+export const saveSelectionSchema = z.object({
+  title: z.string().trim().min(1, 'Give the gallery a title.').max(160),
+  photoIds: z
+    .array(z.string().min(1).max(64))
+    .max(5000, 'That is more photos than a single gallery can hold.'),
+})
+
+export const publishSchema = z.object({
+  pin: pinSchema,
+  // Optional expiry, as an ISO date. Galleries without one stay open.
+  expiresAt: z
+    .string()
+    .trim()
+    .refine((v) => v === '' || !Number.isNaN(Date.parse(v)), 'Enter a valid date.')
+    .optional(),
+})
+
+export const verifyPinSchema = z.object({ pin: pinSchema })

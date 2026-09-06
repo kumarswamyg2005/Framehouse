@@ -1,0 +1,320 @@
+/* Contact sheet. Frames butt together on a 4px gutter with no rounded corners
+   and no shadows — the container carries the margin, not the photographs. */
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 0;
+  background: var(--ink);
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.counts {
+  font-size: 14px;
+  color: var(--bone-dim);
+}
+
+.countStrong {
+  color: var(--bone);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ghost {
+  background: none;
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--bone-dim);
+  cursor: pointer;
+}
+
+.ghost:hover:not(:disabled) {
+  color: var(--bone);
+  border-color: #38424f;
+}
+
+.ghost:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.solid {
+  background: var(--bone);
+  color: var(--ink);
+  border: 1px solid var(--bone);
+  border-radius: 2px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.solid:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.solid:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* --- grid ---------------------------------------------------------------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--gutter-sheet);
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cell {
+  position: relative;
+}
+
+.frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  padding: 0;
+  border: 0;
+  background: var(--ink-raised);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.88;
+  transition: opacity 120ms ease;
+}
+
+.frame:hover img,
+.frame:focus-visible img {
+  opacity: 1;
+}
+
+/* Selection is a safelight inset rule plus a filled corner square. No checkbox,
+   no overlay tint — the photograph stays readable. */
+.selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 3px solid var(--safelight);
+  pointer-events: none;
+}
+
+.mark {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  width: 11px;
+  height: 11px;
+  background: var(--safelight);
+  pointer-events: none;
+}
+
+.frameNo {
+  display: block;
+  margin: 5px 0 0;
+  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--bone-dim);
+}
+
+.byline {
+  font-size: 11px;
+  color: var(--bone-dim);
+  opacity: 0.7;
+  margin-left: 6px;
+}
+
+.hints {
+  position: sticky;
+  bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 9px 12px;
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  font-size: 12px;
+  color: var(--bone-dim);
+}
+
+.hintKey {
+  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  color: var(--bone);
+}
+
+.dismiss {
+  background: none;
+  border: 0;
+  color: var(--bone-dim);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 0 0 4px;
+}
+
+.dismiss:hover {
+  color: var(--bone);
+}
+
+.empty {
+  padding: 56px 0;
+  font-size: 14px;
+  color: var(--bone-dim);
+}
+
+/* --- drop zone ----------------------------------------------------------- */
+
+.dropzone {
+  border: 1px dashed var(--ink-line);
+  border-radius: 2px;
+  padding: 34px 20px;
+  text-align: center;
+  margin: 24px 0 0;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.dropzoneActive {
+  border-color: var(--safelight);
+  background: var(--ink-raised);
+}
+
+.dropCopy {
+  margin: 0;
+  font-size: 14px;
+  color: var(--bone-dim);
+}
+
+.pick {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--bone);
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.pick:hover {
+  border-bottom-color: var(--bone-dim);
+}
+
+.dropHint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--bone-dim);
+  opacity: 0.75;
+}
+
+/* --- upload queue -------------------------------------------------------- */
+
+.queue {
+  margin: 20px 0 0;
+  border-top: 1px solid var(--ink-line);
+}
+
+.queueHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  font-size: 14px;
+  color: var(--bone-dim);
+}
+
+.bar {
+  height: 2px;
+  background: var(--ink-line);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--ok);
+  transition: width 160ms linear;
+}
+
+.queueList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.queueRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--ink-line);
+  font-size: 12px;
+}
+
+.queueName {
+  color: var(--bone);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.queueState {
+  flex: 0 0 auto;
+  color: var(--bone-dim);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stateReady {
+  color: var(--ok);
+}
+
+.retry {
+  background: none;
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  padding: 3px 8px;
+  font-size: 12px;
+  color: var(--bone);
+  cursor: pointer;
+}
+
+.retry:hover {
+  border-color: #38424f;
+}
+
+@media (max-width: 620px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  }
+
+  .toolbar {
+    gap: 10px;
+  }
+}

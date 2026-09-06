@@ -110,3 +110,12 @@ img {
     scroll-behavior: auto !important;
   }
 }
+
+/* The client gallery is a different surface, not a theme of the workspace.
+   Selecting on :has keeps the switch in CSS — no flash of the dark ground
+   while a client component mounts. */
+body:has(.gallerySurface) {
+  background: var(--paper);
+  color: var(--graphite);
+  color-scheme: light;
+}

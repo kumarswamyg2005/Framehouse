@@ -1,0 +1,48 @@
+# Local development dependencies.
+#
+# Production uses Neon for Postgres and Cloudflare R2 for object storage. Both
+# are swapped in by environment variable alone — MinIO speaks the same S3 API as
+# R2, so the application code below lib/storage/r2.ts is identical either way.
+#
+#   docker compose up -d
+#   npm run db:deploy && npm run db:seed
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: framehouse-pg
+    environment:
+      POSTGRES_USER: framehouse
+      POSTGRES_PASSWORD: framehouse
+      POSTGRES_DB: framehouse
+    ports:
+      - '5433:5432'
+    volumes:
+      - framehouse-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U framehouse']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: framehouse-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: framehouse
+      MINIO_ROOT_PASSWORD: framehouse-dev-secret
+    ports:
+      - '9000:9000' # S3 API
+      - '9001:9001' # web console
+    volumes:
+      - framehouse-minio:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  framehouse-pg:
+  framehouse-minio:

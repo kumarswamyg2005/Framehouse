@@ -1,0 +1,118 @@
+'use client'
+
+import { useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import styles from './gallery.module.css'
+
+/**
+ * Six digits, auto-advancing and paste-aware.
+ *
+ * The message on failure is the same whether the PIN was wrong or the gallery
+ * does not exist — the server returns one error for both, and this component
+ * does not try to be more helpful than that.
+ */
+export function PinGate({ slug, title }: { slug: string; title: string }) {
+  const router = useRouter()
+  const [digits, setDigits] = useState<string[]>(Array(6).fill(''))
+  const [message, setMessage] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
+  const [shake, setShake] = useState(false)
+  const boxes = useRef<(HTMLInputElement | null)[]>([])
+
+  const pin = digits.join('')
+
+  function fill(next: string[]) {
+    setDigits(next)
+    if (next.join('').length === 6) void submit(next.join(''))
+  }
+
+  function setDigit(index: number, value: string) {
+    const cleaned = value.replace(/\D/g, '')
+
+    // Pasting the whole PIN into any box fills the row.
+    if (cleaned.length > 1) {
+      const chars = cleaned.slice(0, 6).split('')
+      const next = Array.from({ length: 6 }, (_, i) => chars[i] ?? '')
+      boxes.current[Math.min(chars.length, 5)]?.focus()
+      fill(next)
+      return
+    }
+
+    const next = digits.map((d, i) => (i === index ? cleaned : d))
+    if (cleaned) boxes.current[index + 1]?.focus()
+    fill(next)
+  }
+
+  async function submit(value: string) {
+    if (value.length !== 6 || pending) return
+    setPending(true)
+    setMessage(null)
+
+    const response = await fetch(`/api/public/gallery/${slug}/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: value }),
+    })
+
+    if (response.ok) {
+      // The cookie is set; re-render the server component, which now resolves
+      // to the gallery instead of this gate.
+      router.refresh()
+      return
+    }
+
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: { message?: string } }
+      | null
+
+    setMessage(payload?.error?.message ?? 'That PIN doesn’t match.')
+    setDigits(Array(6).fill(''))
+    setShake(true)
+    setTimeout(() => setShake(false), 200)
+    boxes.current[0]?.focus()
+    setPending(false)
+  }
+
+  return (
+    <div className={styles.gallerySurface}>
+      <div className={styles.gate}>
+        <div className={styles.gateInner}>
+          <h1 className={styles.gateTitle}>{title}</h1>
+          <p className={styles.gateNote}>Enter the six-digit PIN from your photographer.</p>
+
+          <div
+            className={`${styles.pinRow} ${shake ? styles.shake : ''}`}
+            role="group"
+            aria-label="Gallery PIN"
+          >
+            {digits.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => {
+                  boxes.current[index] = el
+                }}
+                className={styles.pinBox}
+                value={digit}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                autoFocus={index === 0}
+                disabled={pending}
+                aria-label={`Digit ${index + 1}`}
+                onChange={(e) => setDigit(index, e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Backspace' && !digits[index]) boxes.current[index - 1]?.focus()
+                  if (e.key === 'Enter') void submit(pin)
+                }}
+              />
+            ))}
+          </div>
+
+          <p className={`${styles.gateMessage} ${pending ? styles.gateWorking : ''}`} role="status">
+            {pending ? 'Checking…' : message}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}

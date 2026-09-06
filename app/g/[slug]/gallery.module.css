@@ -1,0 +1,247 @@
+.gallerySurface {
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--graphite);
+}
+
+/* --- PIN gate ------------------------------------------------------------ */
+
+.gate {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+}
+
+.gateInner {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.gateTitle {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--graphite);
+}
+
+.gateNote {
+  margin: 12px 0 32px;
+  font-size: 14px;
+  color: var(--graphite-dim);
+}
+
+.pinRow {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.pinBox {
+  width: 46px;
+  height: 56px;
+  text-align: center;
+  background: var(--paper-shade);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: var(--graphite);
+  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-size: 20px;
+}
+
+.pinBox:focus-visible {
+  outline: 2px solid var(--safelight);
+  outline-offset: 2px;
+}
+
+.pinBox:disabled {
+  opacity: 0.6;
+}
+
+.shake {
+  animation: shake 150ms ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shake {
+    animation: none;
+  }
+}
+
+.gateMessage {
+  margin: 22px 0 0;
+  font-size: 14px;
+  color: var(--graphite);
+  min-height: 21px;
+}
+
+.gateWorking {
+  color: var(--graphite-dim);
+}
+
+/* --- gallery ------------------------------------------------------------- */
+
+.header {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 64px 24px 40px;
+}
+
+.title {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--graphite);
+}
+
+.credit {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--graphite-dim);
+}
+
+.sheet {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px 96px;
+  column-count: 3;
+  column-gap: var(--gutter-gallery);
+}
+
+.figure {
+  break-inside: avoid;
+  margin: 0 0 var(--gutter-gallery);
+  padding: 0;
+  border: 0;
+  background: none;
+  width: 100%;
+  display: block;
+  cursor: zoom-in;
+  /* One orchestrated moment: the grid fades in on unlock, staggered. */
+  animation: rise 400ms ease both;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .figure {
+    animation: none;
+  }
+}
+
+.figure img {
+  width: 100%;
+  height: auto;
+  background: var(--paper-shade);
+}
+
+.footer {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px 72px;
+  font-size: 12px;
+  color: var(--graphite-dim);
+}
+
+@media (max-width: 900px) {
+  .sheet {
+    column-count: 2;
+  }
+
+  .header {
+    padding: 44px 20px 28px;
+  }
+
+  .title {
+    font-size: 34px;
+  }
+
+  .sheet,
+  .footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+/* --- lightbox ------------------------------------------------------------ */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: rgb(27 27 25 / 0.97);
+}
+
+.lightboxTop {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 20px;
+}
+
+.lightboxStage {
+  display: grid;
+  place-items: center;
+  padding: 0 20px;
+  min-height: 0;
+}
+
+.lightboxStage img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.lightboxBottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 16px 20px 26px;
+}
+
+.counter {
+  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--paper-shade);
+  opacity: 0.75;
+}
+
+.lbButton {
+  background: none;
+  border: 1px solid rgb(242 242 239 / 0.28);
+  border-radius: 2px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--paper);
+  cursor: pointer;
+}
+
+.lbButton:hover:not(:disabled) {
+  border-color: rgb(242 242 239 / 0.6);
+}
+
+.lbButton:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.lbLoading {
+  font-size: 12px;
+  color: var(--paper-shade);
+  opacity: 0.7;
+}

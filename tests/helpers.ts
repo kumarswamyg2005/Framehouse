@@ -88,3 +88,12 @@ export async function expectApiError(promise: Promise<unknown>, code: string) {
   }
   throw new Error(`Expected the call to reject with ${code}, but it resolved`)
 }
+
+/**
+ * The exact field set every actor-facing query selects. Kept here so a future
+ * change that widens it — for instance to `include: { user: true }` — fails a
+ * test rather than quietly serialising a password hash.
+ */
+export function getActorFieldsForTest(): string[] {
+  return ['id', 'email', 'name', 'role']
+}

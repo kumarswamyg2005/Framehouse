@@ -1,0 +1,84 @@
+/* The loupe: a photographer's magnifier over one frame of the sheet. */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: rgb(18 22 28 / 0.97);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  color: var(--bone-dim);
+  font-size: 12px;
+}
+
+.filename {
+  color: var(--bone);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stage {
+  display: grid;
+  place-items: center;
+  padding: 0 20px;
+  min-height: 0;
+}
+
+.stage img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.loading {
+  font-size: 12px;
+  color: var(--bone-dim);
+}
+
+.bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px 20px 22px;
+}
+
+.counter {
+  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--bone-dim);
+}
+
+.nav,
+.close,
+.danger {
+  background: none;
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--bone-dim);
+  cursor: pointer;
+}
+
+.nav:hover:not(:disabled),
+.close:hover,
+.danger:hover:not(:disabled) {
+  color: var(--bone);
+  border-color: #38424f;
+}
+
+.nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
