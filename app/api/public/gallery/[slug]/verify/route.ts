@@ -16,8 +16,8 @@ export const POST = handler(async (request: Request, { params }: Params) => {
   const { slug } = await params
   const input = await parseBody(request, verifyPinSchema)
 
-  await verifyGalleryPin(slug, hashIp(clientIp(request)), input)
-  await grantGalleryAccess(slug)
+  const { pinVersion } = await verifyGalleryPin(slug, hashIp(clientIp(request)), input)
+  await grantGalleryAccess(slug, pinVersion)
 
   return NextResponse.json({ ok: true })
 })

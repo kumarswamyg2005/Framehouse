@@ -1,0 +1,53 @@
+.shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.inner {
+  max-width: 46ch;
+  position: relative;
+  z-index: 2;
+}
+
+.mark {
+  width: 34px;
+  height: 1px;
+  background: var(--safelight);
+  margin: 0 auto 24px;
+}
+
+.title {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: var(--display-2);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--bone);
+}
+
+.body {
+  margin: 14px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--bone-dim);
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 30px;
+  padding: 12px 18px;
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  font-size: 14px;
+  color: var(--bone);
+  text-decoration: none;
+  transition: border-color var(--dur-ui) var(--ease-out);
+}
+
+.action:hover {
+  border-color: color-mix(in srgb, var(--bone) 35%, transparent);
+}

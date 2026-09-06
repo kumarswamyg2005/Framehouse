@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useCloseOnBack } from '@/components/useCloseOnBack'
 import type { SheetPhoto } from './ContactSheet'
 import styles from './loupe.module.css'
 
@@ -45,6 +46,9 @@ export function Loupe({ photos, index, onIndex, onClose, onDelete, deleting }: P
       cancelled = true
     }
   }, [photo])
+
+  // Back closes the loupe rather than leaving the contact sheet.
+  useCloseOnBack(onClose)
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {

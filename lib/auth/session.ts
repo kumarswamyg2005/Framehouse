@@ -72,16 +72,20 @@ export async function requireActor(): Promise<Actor> {
  * Customer gallery cookie. Separate audience, separate cookie, separate TTL.
  * ---------------------------------------------------------------------- */
 
-export async function grantGalleryAccess(slug: string): Promise<void> {
-  const token = await signGalleryToken(slug)
+export async function grantGalleryAccess(slug: string, pinVersion: number): Promise<void> {
+  const token = await signGalleryToken(slug, pinVersion)
   const store = await cookies()
   store.set(galleryCookieName(slug), token, { ...baseCookie, maxAge: GALLERY_TTL_SECONDS })
 }
 
-export async function hasGalleryAccess(slug: string): Promise<boolean> {
+/**
+ * The caller passes the gallery's current pinVersion, read live from the
+ * database. A token minted before the PIN last changed no longer verifies.
+ */
+export async function hasGalleryAccess(slug: string, pinVersion: number): Promise<boolean> {
   const token = (await cookies()).get(galleryCookieName(slug))?.value
   if (!token) return false
-  return verifyGalleryToken(token, slug)
+  return verifyGalleryToken(token, slug, pinVersion)
 }
 
 /**

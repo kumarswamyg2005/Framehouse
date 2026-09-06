@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { hasGalleryAccess } from '@/lib/auth/session'
-import { getPublicGallery } from '@/lib/data/gallery'
+import { currentPinVersion, getPublicGallery } from '@/lib/data/gallery'
 import { handler, notFound } from '@/lib/http'
 
 type Params = { params: Promise<{ slug: string }> }
@@ -10,7 +10,10 @@ export const GET = handler(async (_request: Request, { params }: Params) => {
 
   // No cookie is treated as "no such gallery", not "unauthorised" — the
   // existence of a gallery at this slug is itself something to withhold.
-  if (!(await hasGalleryAccess(slug))) throw notFound('That gallery is not available.')
+  const pinVersion = await currentPinVersion(slug)
+  if (pinVersion === null || !(await hasGalleryAccess(slug, pinVersion))) {
+    throw notFound('That gallery is not available.')
+  }
 
   return NextResponse.json(await getPublicGallery(slug), {
     headers: { 'Cache-Control': 'no-store' },

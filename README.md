@@ -307,6 +307,12 @@ missing account costs the same wall-clock time as a wrong password.
 takes effect on the client's next request. Nothing about publication state is
 baked into the token.
 
+**Changing a PIN strands the old sessions.** `Gallery.pinVersion` increments on
+every publish and on unpublish, and the gallery JWT carries that number. A token
+minted under the previous PIN stops verifying immediately — otherwise a
+photographer changing a leaked PIN would leave whoever had it with up to two
+hours of access.
+
 **Response headers.** A Content-Security-Policy that names the storage origin
 explicitly for `img-src` and `connect-src` and nothing else, plus `nosniff`,
 `X-Frame-Options: DENY`, `frame-ancestors 'none'` (a PIN-protected gallery
@@ -394,7 +400,7 @@ SEED_GALLERY_PIN="482917"
 ## Tests
 
 ```bash
-npm test          # 54 integration tests
+npm test          # 57 integration tests
 npm run test:e2e  # 1 end-to-end pass through the whole workflow
 ```
 
@@ -412,6 +418,8 @@ What it covers:
   another event, or when the bytes do not decode as an image.
 - Wrong PIN fails; the sixth attempt is rate-limited with `Retry-After`; the
   limit is per IP; republishing clears it.
+- Changing the PIN moves the gallery's PIN generation forward, so a token issued
+  under the old one no longer verifies.
 - A correct PIN returns exactly the selected photos, and an unselected photo id
   from the same event returns `404`.
 - Unpublishing, or emptying the selection, revokes an already-issued cookie.

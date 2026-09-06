@@ -48,7 +48,7 @@ describe('token audience separation', () => {
 
   // Invariant 6: a gallery token must buy nothing on the authenticated API.
   it('refuses a gallery token where a session token is expected', async () => {
-    const galleryToken = await signGalleryToken('abc123def456')
+    const galleryToken = await signGalleryToken('abc123def456', 0)
     await expect(verifySessionToken(galleryToken)).resolves.toBeNull()
   })
 
@@ -58,13 +58,22 @@ describe('token audience separation', () => {
       email: 'a@test.local',
       role: 'ADMIN',
     })
-    await expect(verifyGalleryToken(sessionToken, 'abc123def456')).resolves.toBe(false)
+    await expect(verifyGalleryToken(sessionToken, 'abc123def456', 0)).resolves.toBe(false)
   })
 
   it('scopes a gallery token to a single slug', async () => {
-    const token = await signGalleryToken('abc123def456')
-    await expect(verifyGalleryToken(token, 'abc123def456')).resolves.toBe(true)
-    await expect(verifyGalleryToken(token, 'zzz999yyy888')).resolves.toBe(false)
+    const token = await signGalleryToken('abc123def456', 0)
+    await expect(verifyGalleryToken(token, 'abc123def456', 0)).resolves.toBe(true)
+    await expect(verifyGalleryToken(token, 'zzz999yyy888', 0)).resolves.toBe(false)
+  })
+
+  // Changing the PIN bumps Gallery.pinVersion, which must strand every token
+  // issued under the old one rather than leaving it live until it expires.
+  it('stops verifying once the PIN generation moves on', async () => {
+    const token = await signGalleryToken('abc123def456', 3)
+    await expect(verifyGalleryToken(token, 'abc123def456', 3)).resolves.toBe(true)
+    await expect(verifyGalleryToken(token, 'abc123def456', 4)).resolves.toBe(false)
+    await expect(verifyGalleryToken(token, 'abc123def456', 0)).resolves.toBe(false)
   })
 
   it('rejects a tampered token', async () => {

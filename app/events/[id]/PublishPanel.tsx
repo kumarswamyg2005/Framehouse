@@ -38,7 +38,12 @@ export function PublishPanel({
   const [digits, setDigits] = useState<string[]>(Array(6).fill(''))
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // A published gallery shows its link, not a PIN field. Changing the PIN is an
+  // explicit step, because it signs every client currently viewing back out.
+  const [changingPin, setChangingPin] = useState(false)
   const boxes = useRef<(HTMLInputElement | null)[]>([])
+
+  const alreadyPublished = gallery?.isPublished === true
 
   const pin = digits.join('')
   const shareUrl = gallery ? `${appUrl}/g/${gallery.slug}` : ''
@@ -80,7 +85,8 @@ export function PublishPanel({
     onChanged({ ...gallery, slug, title, isPublished: true })
     setDigits(Array(6).fill(''))
     setPending(false)
-    onToast('Published')
+    setChangingPin(false)
+    onToast(alreadyPublished ? 'New PIN set' : 'Published')
   }
 
   async function unpublish() {
@@ -94,7 +100,7 @@ export function PublishPanel({
     setPending(false)
   }
 
-  if (gallery?.isPublished) {
+  if (alreadyPublished && !changingPin) {
     return (
       <div className={styles.panel}>
         <h2 className={`${styles.panelTitle} voiceQuiet`}>{gallery.title}</h2>
@@ -122,11 +128,23 @@ export function PublishPanel({
         </div>
 
         <p className={styles.pinNote}>
-          The PIN is stored as a one-way hash and cannot be shown again. Publish once more to set a
-          new one.
+          The PIN is stored as a one-way hash, so it cannot be shown again. Setting a new one signs
+          out anyone currently viewing the gallery.
         </p>
 
         <div className={styles.row} style={{ marginTop: 22 }}>
+          <button
+            type="button"
+            className={styles.ghost}
+            onClick={() => {
+              setDigits(Array(6).fill(''))
+              setError(null)
+              setChangingPin(true)
+            }}
+            disabled={pending}
+          >
+            Set a new PIN
+          </button>
           <button type="button" className={styles.ghost} onClick={unpublish} disabled={pending}>
             {pending ? 'Working…' : 'Unpublish'}
           </button>
@@ -140,24 +158,29 @@ export function PublishPanel({
 
   return (
     <div className={styles.panel}>
-      <h2 className={`${styles.panelTitle} voiceQuiet`}>Publish to a client gallery</h2>
+      <h2 className={`${styles.panelTitle} voiceQuiet`}>
+        {changingPin ? 'Set a new PIN' : 'Publish to a client gallery'}
+      </h2>
       <p className={styles.panelNote}>
-        Publish {selectedCount} {selectedCount === 1 ? 'photo' : 'photos'} to a client gallery? You
-        can unpublish anytime.
+        {changingPin
+          ? 'The link stays the same. Anyone currently viewing the gallery will be asked for the new PIN.'
+          : `Publish ${selectedCount} ${selectedCount === 1 ? 'photo' : 'photos'} to a client gallery? You can unpublish anytime.`}
       </p>
 
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="gallery-title">
-          Gallery title
-        </label>
-        <input
-          className={styles.input}
-          id="gallery-title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          disabled={pending}
-        />
-      </div>
+      {!changingPin && (
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="gallery-title">
+            Gallery title
+          </label>
+          <input
+            className={styles.input}
+            id="gallery-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            disabled={pending}
+          />
+        </div>
+      )}
 
       <div className={styles.field}>
         <span className={styles.label} id="pin-label">
@@ -193,9 +216,14 @@ export function PublishPanel({
           onClick={publish}
           disabled={pending || pin.length !== 6 || selectedCount === 0 || !title.trim()}
         >
-          {pending ? 'Publishing…' : 'Publish'}
+          {pending ? 'Saving…' : changingPin ? 'Set new PIN' : 'Publish'}
         </button>
-        <button type="button" className={styles.ghost} onClick={onClose} disabled={pending}>
+        <button
+          type="button"
+          className={styles.ghost}
+          onClick={() => (changingPin ? setChangingPin(false) : onClose())}
+          disabled={pending}
+        >
           Cancel
         </button>
       </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useCloseOnBack } from '@/components/useCloseOnBack'
 import styles from './gallery.module.css'
 
 export type GalleryPhoto = {
@@ -167,6 +168,9 @@ function Lightbox({
       if (neighbour) void fetch(`/api/public/gallery/${slug}/photos/${neighbour.id}/url`)
     }
   }, [index, photos, slug])
+
+  // Back closes the lightbox rather than leaving the gallery.
+  useCloseOnBack(onClose)
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {

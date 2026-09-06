@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { hasGalleryAccess } from '@/lib/auth/session'
-import { getPublicGallery } from '@/lib/data/gallery'
+import { currentPinVersion, getPublicGallery } from '@/lib/data/gallery'
 import { Gallery } from './Gallery'
 import { PinGate } from './PinGate'
 
@@ -21,7 +21,8 @@ export default async function GalleryPage({ params }: { params: Promise<{ slug: 
    * gallery is real until the correct PIN is entered, so the URL cannot be used
    * to enumerate galleries.
    */
-  if (!(await hasGalleryAccess(slug))) {
+  const pinVersion = await currentPinVersion(slug)
+  if (pinVersion === null || !(await hasGalleryAccess(slug, pinVersion))) {
     return <PinGate slug={slug} />
   }
 

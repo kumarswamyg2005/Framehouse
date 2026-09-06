@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { hasGalleryAccess } from '@/lib/auth/session'
-import { getPublicPhotoUrl } from '@/lib/data/gallery'
+import { currentPinVersion, getPublicPhotoUrl } from '@/lib/data/gallery'
 import { handler, notFound } from '@/lib/http'
 
 type Params = { params: Promise<{ slug: string; photoId: string }> }
@@ -15,7 +15,10 @@ type Params = { params: Promise<{ slug: string; photoId: string }> }
  */
 export const GET = handler(async (request: Request, { params }: Params) => {
   const { slug, photoId } = await params
-  if (!(await hasGalleryAccess(slug))) throw notFound('That gallery is not available.')
+  const pinVersion = await currentPinVersion(slug)
+  if (pinVersion === null || !(await hasGalleryAccess(slug, pinVersion))) {
+    throw notFound('That gallery is not available.')
+  }
 
   const params_ = new URL(request.url).searchParams
   const download = params_.get('download') === '1'

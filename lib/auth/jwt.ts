@@ -58,9 +58,14 @@ export async function verifySessionToken(token: string): Promise<SessionClaims |
   }
 }
 
-/** Scoped to exactly one gallery slug. Grants nothing else, anywhere. */
-export async function signGalleryToken(slug: string): Promise<string> {
-  return new SignJWT({})
+/**
+ * Scoped to exactly one gallery slug AND one PIN generation. Grants nothing
+ * else, anywhere. Bumping Gallery.pinVersion invalidates every token already
+ * issued for that gallery, which is what makes changing a leaked PIN take
+ * effect immediately rather than at token expiry.
+ */
+export async function signGalleryToken(slug: string, pinVersion: number): Promise<string> {
+  return new SignJWT({ v: pinVersion })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(slug)
     .setIssuer(ISSUER)
@@ -71,16 +76,21 @@ export async function signGalleryToken(slug: string): Promise<string> {
 }
 
 /**
- * The slug is checked here rather than by the caller, so there is no way to
- * verify a gallery token without also saying which gallery it must be for.
+ * The slug and PIN generation are checked here rather than by the caller, so
+ * there is no way to verify a gallery token without saying which gallery, and
+ * which generation of its PIN, it must be for.
  */
-export async function verifyGalleryToken(token: string, expectedSlug: string): Promise<boolean> {
+export async function verifyGalleryToken(
+  token: string,
+  expectedSlug: string,
+  expectedPinVersion: number
+): Promise<boolean> {
   try {
     const { payload } = await jwtVerify(token, secret(), {
       issuer: ISSUER,
       audience: AUD_GALLERY,
     })
-    return payload.sub === expectedSlug
+    return payload.sub === expectedSlug && payload.v === expectedPinVersion
   } catch {
     return false
   }

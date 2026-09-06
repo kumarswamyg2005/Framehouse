@@ -97,6 +97,8 @@ export async function publishGallery(
       isPublished: true,
       publishedAt: new Date(),
       expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
+      // Invalidates every customer session issued under the previous PIN.
+      pinVersion: { increment: 1 },
     },
     select: { slug: true, publishedAt: true, expiresAt: true },
   })
@@ -116,7 +118,7 @@ export async function unpublishGallery(actor: Actor, galleryId: string) {
   const gallery = await requireOwnedGallery(actor, galleryId)
   await prisma.gallery.update({
     where: { id: gallery.id },
-    data: { isPublished: false, publishedAt: null },
+    data: { isPublished: false, publishedAt: null, pinVersion: { increment: 1 } },
   })
   return { slug: gallery.slug }
 }
@@ -134,6 +136,7 @@ export async function getGallery(actor: Actor, eventId: string) {
       isPublished: true,
       publishedAt: true,
       expiresAt: true,
+      pinVersion: true,
       photos: { select: { photoId: true }, orderBy: { position: 'asc' } },
     },
   })
@@ -168,12 +171,12 @@ export async function verifyGalleryPin(
   slug: string,
   ipHash: string,
   input: z.infer<typeof verifyPinSchema>
-): Promise<void> {
+): Promise<{ pinVersion: number }> {
   await assertPinAttemptAllowed(slug, ipHash)
 
   const gallery = await prisma.gallery.findFirst({
     where: publishedGalleryWhere(slug),
-    select: { pinHash: true },
+    select: { pinHash: true, pinVersion: true },
   })
 
   const matches = gallery
@@ -182,9 +185,24 @@ export async function verifyGalleryPin(
 
   await recordPinAttempt(slug, ipHash, matches)
 
-  if (!matches) {
+  if (!matches || !gallery) {
     throw new ApiError('UNAUTHENTICATED', 'That PIN doesn’t match.')
   }
+
+  return { pinVersion: gallery.pinVersion }
+}
+
+/**
+ * The current PIN generation for a published gallery, or null if there is no
+ * open gallery at this slug. Routes read this before checking the cookie, so a
+ * token minted under an older PIN stops verifying immediately.
+ */
+export async function currentPinVersion(slug: string): Promise<number | null> {
+  const gallery = await prisma.gallery.findFirst({
+    where: publishedGalleryWhere(slug),
+    select: { pinVersion: true },
+  })
+  return gallery?.pinVersion ?? null
 }
 
 /**

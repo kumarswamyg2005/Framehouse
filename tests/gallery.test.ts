@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { prisma } from '@/lib/db/prisma'
+import { signGalleryToken, verifyGalleryToken } from '@/lib/auth/jwt'
 import {
+  currentPinVersion,
   getGallery,
   getPublicGallery,
   getPublicPhotoUrl,
@@ -100,7 +102,7 @@ describe('selection and publishing', () => {
 describe('PIN verification', () => {
   it('accepts the correct PIN', async () => {
     const { slug } = await publishedGallery()
-    await expect(verifyGalleryPin(slug, IP, { pin: PIN })).resolves.toBeUndefined()
+    await expect(verifyGalleryPin(slug, IP, { pin: PIN })).resolves.toHaveProperty('pinVersion')
   })
 
   it('rejects a wrong PIN with a message that reveals nothing', async () => {
@@ -155,7 +157,7 @@ describe('PIN verification', () => {
       await expectApiError(verifyGalleryPin(slug, 'attacker-ip', { pin: '000000' }), 'UNAUTHENTICATED')
     }
     await expectApiError(verifyGalleryPin(slug, 'attacker-ip', { pin: PIN }), 'RATE_LIMITED')
-    await expect(verifyGalleryPin(slug, 'client-ip', { pin: PIN })).resolves.toBeUndefined()
+    await expect(verifyGalleryPin(slug, 'client-ip', { pin: PIN })).resolves.toHaveProperty('pinVersion')
   })
 
   it('clears the lockout when the lead republishes with a new PIN', async () => {
@@ -166,7 +168,37 @@ describe('PIN verification', () => {
     await expectApiError(verifyGalleryPin(slug, IP, { pin: PIN }), 'RATE_LIMITED')
 
     await publishGallery(admin, galleryId, { pin: '135790' })
-    await expect(verifyGalleryPin(slug, IP, { pin: '135790' })).resolves.toBeUndefined()
+    await expect(verifyGalleryPin(slug, IP, { pin: '135790' })).resolves.toHaveProperty('pinVersion')
+  })
+
+  // Changing a leaked PIN must take effect at once, not when the customer's
+  // two-hour token happens to expire.
+  it('moves the PIN generation forward on every publish, stranding old sessions', async () => {
+    const { admin, galleryId, slug } = await publishedGallery()
+
+    const first = await verifyGalleryPin(slug, IP, { pin: PIN })
+    expect(await currentPinVersion(slug)).toBe(first.pinVersion)
+
+    await publishGallery(admin, galleryId, { pin: '135790' })
+
+    const now = await currentPinVersion(slug)
+    expect(now).toBeGreaterThan(first.pinVersion)
+    // A token minted under the old generation no longer verifies.
+    const stale = await signGalleryToken(slug, first.pinVersion)
+    await expect(verifyGalleryToken(stale, slug, now!)).resolves.toBe(false)
+  })
+
+  it('moves the generation forward on unpublish too', async () => {
+    const { admin, galleryId, slug } = await publishedGallery()
+    const { pinVersion } = await verifyGalleryPin(slug, IP, { pin: PIN })
+
+    await unpublishGallery(admin, galleryId)
+    // Nothing published at this slug any more.
+    expect(await currentPinVersion(slug)).toBeNull()
+
+    await publishGallery(admin, galleryId, { pin: PIN })
+    const after = await currentPinVersion(slug)
+    expect(after).toBeGreaterThan(pinVersion)
   })
 
   it('records attempts for slugs that do not resolve', async () => {
