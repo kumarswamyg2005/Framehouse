@@ -26,3 +26,4 @@ blob-report/
 .claude/
 skills-lock.json
 .neon
+.env*

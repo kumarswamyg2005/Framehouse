@@ -256,14 +256,6 @@ const orphan = await memberA.call(`/api/events/${eventId}/photos/confirm`, {
 })
 check('6.c', 'Failed upload writes no row', orphan.status === 502 && orphan.body.error.code === 'UPLOAD_FAILED')
 
-const rl = client()
-let limited = null
-for (let i = 1; i <= 8 && !limited; i++) {
-  const r = await rl.call(`/api/public/gallery/${slug}/verify`, { method: 'POST', body: JSON.stringify({ pin: '000000' }) })
-  if (r.status === 429) limited = { at: i, retry: r.headers.get('retry-after') }
-}
-check('6.d', 'Repeated wrong PIN rate-limited', !!limited, limited ? `at attempt ${limited.at}, Retry-After ${limited.retry}s` : 'never limited')
-
 check('6.e', 'Unselected photo unreachable', custUnselected.status === 404)
 
 heading('§6  Cross-tenant isolation (two leads)')
@@ -283,6 +275,27 @@ for (const [label, fn] of probes) {
 }
 const stillMine = await client().call(`/api/public/gallery/${slug}/verify`, { method: 'POST', body: JSON.stringify({ pin: PIN }) })
 check('6', 'Owner’s PIN still works after the attempt', stillMine.status === 200)
+
+/*
+  The rate-limit clause runs here, after everything that needs a working PIN.
+
+  Each simulated client carries its own X-Forwarded-For, which is enough to keep
+  them independent locally. It is not enough against a real deployment: Vercel's
+  proxy overwrites that header with the true client address, so every client in
+  this file collapses onto one IP and five deliberate failures lock the gallery
+  for whatever runs next. Ordering is the fix — the limiter is behaving exactly
+  as designed, and the harness has no way to fake distinct source addresses
+  through a proxy that rewrites them.
+*/
+heading('§6.d  PIN rate limiting')
+
+const rl = client()
+let limited = null
+for (let i = 1; i <= 8 && !limited; i++) {
+  const r = await rl.call(`/api/public/gallery/${slug}/verify`, { method: 'POST', body: JSON.stringify({ pin: '000000' }) })
+  if (r.status === 429) limited = { at: i, retry: r.headers.get('retry-after') }
+}
+check('6.d', 'Repeated wrong PIN rate-limited', !!limited, limited ? `at attempt ${limited.at}, Retry-After ${limited.retry}s` : 'never limited')
 
 heading('§6  Input validation & error handling')
 
@@ -364,6 +377,7 @@ await memberPage.click('button[type=submit]')
 await memberPage.waitForURL('**/events')
 await memberPage.getByRole('link', { name: /Arjun & Priya Wedding/ }).click()
 await memberPage.waitForURL(/\/events\/[a-z0-9]+$/)
+await memberPage.getByRole('link', { name: /All events/ }).waitFor({ timeout: 60_000 })
 await memberPage.locator('ul li button[aria-label*="frame"]').first().waitFor()
 check('2.2', 'Member UI hides the publish control', (await memberPage.getByRole('button', { name: 'Publish' }).count()) === 0)
 check('2.2', 'Member UI hides the team roster', (await memberPage.getByRole('button', { name: 'Add to event' }).count()) === 0)

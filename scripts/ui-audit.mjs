@@ -18,6 +18,15 @@ import { join } from 'node:path'
 const BASE = process.env.BASE ?? 'http://localhost:3000'
 const PIN = '482917'
 
+/*
+  A remote target is not a slower local one — it has cold starts. A serverless
+  function waking, a Neon compute resuming from scale-to-zero and sixty
+  presigned URLs being minted can comfortably exceed Playwright's 30s default on
+  the first navigation, so waits are stretched when BASE is not localhost.
+*/
+const REMOTE = !BASE.includes('localhost')
+const WAIT = REMOTE ? 90_000 : 30_000
+
 let passed = 0, failed = 0
 const failures = []
 let page_ = ''
@@ -224,6 +233,10 @@ await it('creates an event with name, date and description', async () => {
   await p.fill('#event-description', 'Audit description')
   await p.getByRole('button', { name: 'Create event' }).click()
   await p.waitForURL(/\/events\/[a-z0-9]+$/)
+// The URL changes before the RSC payload lands, so wait for something only the
+// detail page renders. Locally the gap is invisible; against a deployment it is
+// long enough to read the list page at an event URL.
+await p.getByRole('link', { name: /All events/ }).waitFor({ timeout: 60_000 })
   await p.getByText('Audit description').waitFor()
   await p.getByText('1 December 2026').waitFor()
 })
@@ -241,11 +254,31 @@ await it('header wordmark links home to /events', async () => {
 
 /* ========================== /events/[id] (lead) ========================== */
 heading('Page: /events/[id]  (lead — contact sheet)')
-await p.getByRole('link', { name: new RegExp(`Audit Wedding ${stamp}`) }).click()
-await p.waitForURL(/\/events\/[a-z0-9]+$/)
-const eventUrl = p.url()
-await p.locator('ul li button[aria-label*="frame"]').first().waitFor()
-await p.waitForTimeout(2500)
+/*
+  A hard navigation, not a link click.
+
+  After several in-page navigations the App Router's client cache kept serving
+  the events list at the event's URL against the deployment — waitForURL
+  returned, the address bar was right, and the body was still the list. Link
+  clicks are exercised elsewhere in this file; here the point is to be *on* the
+  page, so this takes the reliable route.
+*/
+const eventUrl = new URL(
+  await p.getByRole('link', { name: new RegExp(`Audit Wedding ${stamp}`) }).getAttribute('href'),
+  BASE
+).toString()
+await p.goto(eventUrl)
+await p.getByRole('link', { name: /All events/ }).waitFor({ timeout: WAIT })
+// Poll on the count rather than the visibility of .first(). Against a remote
+// target the grid streams in, and the first node can be detached and
+// re-attached while React hydrates — which makes a visibility wait flaky even
+// though the page is rendering correctly.
+await p.waitForFunction(
+  () => document.querySelectorAll('ul li button[aria-label*="frame"]').length > 0,
+  null,
+  { timeout: WAIT }
+)
+await p.waitForTimeout(REMOTE ? 6000 : 2500)
 
 await it('shows the first page of 60 frames', async () => {
   const n = await p.locator('ul li button[aria-label*="frame"]').count()
@@ -253,7 +286,7 @@ await it('shows the first page of 60 frames', async () => {
 })
 await it('“Load more frames” pulls the rest', async () => {
   await p.getByRole('button', { name: /Load more frames/ }).click()
-  await p.waitForTimeout(2500)
+  await p.waitForTimeout(REMOTE ? 6000 : 2500)
   const n = await p.locator('ul li button[aria-label*="frame"]').count()
   must(n === 62, `got ${n}`); return `${n} frames`
 })
@@ -448,10 +481,10 @@ await it('member signs in with the temporary password', async () => {
 await it('member cannot create events', async () => {
   must((await m.getByRole('button', { name: 'New event' }).count()) === 0, 'New event offered')
 })
-await m.getByRole('link', { name: new RegExp(`Audit Wedding ${stamp}`) }).click()
-await m.waitForURL(/\/events\/[a-z0-9]+$/)
+await m.goto(eventUrl)
+await m.getByRole('link', { name: /All events/ }).waitFor({ timeout: WAIT })
 await it('member sees only their own frames (none yet)', async () => {
-  await m.getByText('Nothing uploaded yet').waitFor({ timeout: 15000 })
+  await m.getByText('Nothing uploaded yet').waitFor({ timeout: WAIT })
 })
 await it('member has no publish control', async () => {
   must((await m.getByRole('button', { name: /^Publish$|^Gallery$/ }).count()) === 0, 'publish offered')
@@ -529,7 +562,7 @@ await it('a nonexistent slug shows the same gate, not a 404', async () => {
 await it('correct PIN unlocks the gallery', async () => {
   const b = c.locator('input[aria-label^="Digit"]')
   for (let i = 0; i < 6; i++) await b.nth(i).fill('246810'[i])
-  await c.getByRole('button', { name: /^Open / }).first().waitFor({ timeout: 25000 })
+  await c.getByRole('button', { name: /^Open / }).first().waitFor({ timeout: WAIT })
 })
 
 /* ========================== /g/[slug] gallery ============================ */
@@ -540,13 +573,13 @@ await it('header shows title, photographer, event and count', async () => {
   await c.getByText('Frames', { exact: true }).waitFor()
 })
 await it('first page renders 36 photographs', async () => {
-  await c.waitForTimeout(2500)
+  await c.waitForTimeout(REMOTE ? 6000 : 2500)
   const n = await c.getByRole('button', { name: /^Open / }).count()
   must(n === 36, `got ${n}`); return `${n} of 40`
 })
 await it('scrolling pulls the remaining page', async () => {
   await c.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-  await c.waitForTimeout(3000)
+  await c.waitForTimeout(REMOTE ? 7000 : 3000)
   const n = await c.getByRole('button', { name: /^Open / }).count()
   must(n === 40, `got ${n}`); return `${n} of 40`
 })

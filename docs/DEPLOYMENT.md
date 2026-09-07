@@ -116,6 +116,8 @@ Do this from a device that has never visited the site, in a private window.
 
 | Symptom | Cause |
 |---|---|
+| Uploads 403 in production with `InvalidAccessKeyId`, but work locally | A CLI deploy uploads the working directory, not the git repo, so a local `.env` ships with it and Next loads it at build time — a leftover `R2_ENDPOINT=http://localhost:9000` makes production sign every URL for a container that is not there. `.vercelignore` excludes `.env*` for exactly this. |
+| Seeding wipes the wrong database | Prisma Client loads `.env` on import and fills in any variable you did **not** set, so a partially-overridden environment silently mixes local and production. Set every variable explicitly; the seed also refuses a non-local host unless `ALLOW_REMOTE_SEED=true`. |
 | Uploads fail in the browser, fine from curl | R2 CORS not configured, or the origin does not match exactly |
 | Migrations hang or error oddly | Using the pooled URL where the direct one is needed |
 | Signed out immediately after signing in | `NEXT_PUBLIC_APP_URL` does not match the real origin, or it is `http://` |

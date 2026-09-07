@@ -21,7 +21,7 @@ Built for the TrizenAI full-stack internship challenge.
 
 | | |
 |---|---|
-| **Application** | _fill in after deployment_ |
+| **Application** | https://framehouse-kumars-projects-fd1a8297.vercel.app |
 | **Repository** | https://github.com/kumarswamyg2005/Framehouse |
 
 **Demo credentials**
@@ -33,8 +33,7 @@ Built for the TrizenAI full-stack internship challenge.
 | Team member | `sana@demo.test` | `demo-member-pass-2026` |
 | Member on no events | `idle@demo.test` | `demo-member-pass-2026` |
 
-**Client gallery** — `<app-url>/g/<slug>` with PIN `482917`. The seed prints the
-slug when it runs.
+**Client gallery** — https://framehouse-kumars-projects-fd1a8297.vercel.app/g/kf4uzw87vc77 with PIN `482917`.
 
 `idle@demo.test` exists so the scoping rules are demonstrable rather than
 vacuously true: sign in as them and the event list is empty, because they are

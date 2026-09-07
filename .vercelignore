@@ -1,0 +1,18 @@
+# A CLI deploy uploads the local working directory, not the git repository, so
+# anything present here is shipped whether or not it is committed. Local .env
+# files must never be: Next.js loads them at build time, and a stray
+# R2_ENDPOINT=http://localhost:9000 silently made production sign every upload
+# URL for a MinIO container that does not exist there.
+.env
+.env.*
+!.env.example
+
+# Local agent and tool state
+.neon
+.claude
+skills-lock.json
+
+# Tests and their artefacts are not part of the deployed app
+tests
+test-results
+playwright-report
