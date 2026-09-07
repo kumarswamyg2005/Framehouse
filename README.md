@@ -325,6 +325,13 @@ finalisation; anything that does not decode has its object deleted and its row
 marked `FAILED`, and neither a `PENDING` nor a `FAILED` photo can be selected
 into a gallery.
 
+**A client can lock the gallery behind them.** Entering a PIN grants two hours,
+and the gallery footer carries a Lock control that drops the cookie — so on a
+shared or borrowed device, which is exactly how a wedding link gets passed
+around, the session can be ended rather than left open. The page also reloads if
+a browser restores it from its back/forward cache, so a restored history entry
+re-checks with the server instead of redisplaying photographs from memory.
+
 **Revocation is a live read.** Unpublishing a gallery or clearing its selection
 takes effect on the client's next request. Nothing about publication state is
 baked into the token.

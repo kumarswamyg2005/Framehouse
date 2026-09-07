@@ -78,6 +78,7 @@ export function Gallery({
   const [photos, setPhotos] = useState(firstPage)
   const [cursor, setCursor] = useState(firstCursor)
   const [error, setError] = useState(false)
+  const [locking, setLocking] = useState(false)
   const sentinel = useRef<HTMLDivElement | null>(null)
   // A ref, not state: the observer must not be rebuilt when this flips, or a
   // still-intersecting sentinel would immediately fire again.
@@ -136,6 +137,31 @@ export function Gallery({
     const timer = setTimeout(() => window.location.reload(), 4.5 * 60 * 1000)
     return () => clearTimeout(timer)
   }, [])
+
+  /**
+   * Re-check with the server whenever the browser restores this page from its
+   * back/forward cache.
+   *
+   * The gallery response already carries no-store, and Chromium re-requests on
+   * Back — but bfcache behaviour differs between browsers, and a restored page
+   * would otherwise redisplay photographs from memory without asking anyone.
+   * Reloading forces the gate to reappear if the session has since ended.
+   */
+  useEffect(() => {
+    function onPageShow(event: PageTransitionEvent) {
+      if (event.persisted) window.location.reload()
+    }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [])
+
+  async function lock() {
+    setLocking(true)
+    await fetch(`/api/public/gallery/${slug}/lock`, { method: 'POST' })
+    // A full load, not a router refresh: this must leave nothing of the gallery
+    // in the history entry the next person could go Back to.
+    window.location.href = `/g/${slug}`
+  }
 
   return (
     <div className="gallerySurface">
@@ -227,7 +253,12 @@ export function Gallery({
 
         <footer className={styles.footer}>
           <span>Tap any photograph to view it full size.</span>
-          <span>Framehouse</span>
+          <span className={styles.footerRight}>
+            <button type="button" className={styles.lock} onClick={lock} disabled={locking}>
+              {locking ? 'Locking…' : 'Lock this gallery'}
+            </button>
+            <span>Framehouse</span>
+          </span>
         </footer>
       </div>
 

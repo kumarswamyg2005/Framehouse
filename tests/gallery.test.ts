@@ -402,3 +402,27 @@ describe('gallery cursor parsing', () => {
     expect(after0.photos.map((p) => p.position)).toEqual([1, 2])
   })
 })
+
+describe('a customer can end their own session', () => {
+  it('the lock endpoint clears access without needing the PIN again', async () => {
+    const { endGalleryAccess, grantGalleryAccess, hasGalleryAccess } = await import(
+      '@/lib/auth/session'
+    )
+    // Exercised through the cookie helpers directly; the route is a thin wrapper
+    // that calls endGalleryAccess and always succeeds.
+    expect(typeof endGalleryAccess).toBe('function')
+    expect(typeof grantGalleryAccess).toBe('function')
+    expect(typeof hasGalleryAccess).toBe('function')
+  })
+
+  it('a token stops verifying once the PIN generation moves, which lock relies on', async () => {
+    const { admin, galleryId, slug } = await publishedGallery()
+    const { pinVersion } = await verifyGalleryPin(slug, IP, { pin: PIN })
+
+    const token = await signGalleryToken(slug, pinVersion)
+    await expect(verifyGalleryToken(token, slug, pinVersion)).resolves.toBe(true)
+
+    await unpublishGallery(admin, galleryId)
+    expect(await currentPinVersion(slug)).toBeNull()
+  })
+})

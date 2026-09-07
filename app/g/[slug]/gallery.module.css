@@ -266,6 +266,36 @@
   color: var(--graphite-dim);
 }
 
+.footerRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+}
+
+/* The client's own lock. Quiet, because it is not the point of the page — but
+   present, because entering a PIN should be reversible on a shared device. */
+.lock {
+  background: none;
+  border: 1px solid var(--paper-shade);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--graphite-dim);
+  cursor: pointer;
+  transition: color var(--dur-ui) var(--ease-out), border-color var(--dur-ui) var(--ease-out);
+}
+
+.lock:hover:not(:disabled) {
+  color: var(--graphite);
+  border-color: var(--graphite-dim);
+}
+
+.lock:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .retry {
   background: none;
   border: 0;

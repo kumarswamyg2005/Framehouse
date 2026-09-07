@@ -82,6 +82,19 @@ export async function grantGalleryAccess(slug: string, pinVersion: number): Prom
  * The caller passes the gallery's current pinVersion, read live from the
  * database. A token minted before the PIN last changed no longer verifies.
  */
+/**
+ * Ends a customer's gallery session.
+ *
+ * Entering a PIN grants two hours, and until now there was no way to give that
+ * back. On a shared or borrowed device — which is exactly how a wedding link
+ * gets passed around — the next person could press Back and be inside the
+ * gallery. Clearing the cookie is the client's own lock.
+ */
+export async function endGalleryAccess(slug: string): Promise<void> {
+  const store = await cookies()
+  store.set(galleryCookieName(slug), '', { ...baseCookie, maxAge: 0 })
+}
+
 export async function hasGalleryAccess(slug: string, pinVersion: number): Promise<boolean> {
   const token = (await cookies()).get(galleryCookieName(slug))?.value
   if (!token) return false
