@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import styles from './gallery.module.css'
 
 /**
@@ -11,8 +10,12 @@ import styles from './gallery.module.css'
  * does not exist — the server returns one error for both, and this component
  * does not try to be more helpful than that.
  */
-export function PinGate({ slug }: { slug: string }) {
-  const router = useRouter()
+type Props = {
+  slug: string
+  onUnlocked: (gallery: import('./GalleryClient').GalleryData) => void
+}
+
+export function PinGate({ slug, onUnlocked }: Props) {
   const [digits, setDigits] = useState<string[]>(Array(6).fill(''))
   const [message, setMessage] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -55,9 +58,17 @@ export function PinGate({ slug }: { slug: string }) {
     })
 
     if (response.ok) {
-      // The cookie is set; re-render the server component, which now resolves
-      // to the gallery instead of this gate.
-      router.refresh()
+      // The cookie now authorises this page's requests. Fetch the gallery with
+      // it and hand it up — the server never renders photographs for a bare
+      // navigation, only for a PIN that was just entered.
+      const gallery = await fetch(`/api/public/gallery/${slug}`)
+      if (gallery.ok) {
+        onUnlocked(await gallery.json())
+        return
+      }
+      setMessage('That gallery is no longer available.')
+      setDigits(Array(6).fill(''))
+      setPending(false)
       return
     }
 

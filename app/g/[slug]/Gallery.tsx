@@ -23,6 +23,8 @@ type Props = {
   total: number
   photos: GalleryPhoto[]
   nextCursor: number | null
+  /** Drops back to the PIN gate without a page load. */
+  onRelock: () => void
 }
 
 const dateFormat = new Intl.DateTimeFormat('en-GB', {
@@ -40,6 +42,7 @@ export function Gallery({
   total,
   photos: firstPage,
   nextCursor: firstCursor,
+  onRelock,
 }: Props) {
   const [open, setOpen] = useState<number | null>(null)
   // Which thumbnails have decoded, so each can fade up on arrival rather than
@@ -80,6 +83,9 @@ export function Gallery({
   const [error, setError] = useState(false)
   const [locking, setLocking] = useState(false)
   const sentinel = useRef<HTMLDivElement | null>(null)
+  // Read inside the refresh interval without making it a dependency.
+  const photosRef = useRef<GalleryPhoto[]>(firstPage)
+  photosRef.current = photos
   // A ref, not state: the observer must not be rebuilt when this flips, or a
   // still-intersecting sentinel would immediately fire again.
   const loading = useRef(false)
@@ -131,12 +137,32 @@ export function Gallery({
     return () => observer.disconnect()
   }, [cursor, slug])
 
-  // Presigned URLs last five minutes. Reload just before they lapse so a gallery
-  // left open on a second screen does not decay into broken images.
+  /**
+   * Presigned URLs last five minutes. Re-fetch the pages already on screen just
+   * before they lapse.
+   *
+   * This used to reload the page, which is no longer survivable: a reload now
+   * lands on the PIN gate, so a client who simply read for five minutes would
+   * be thrown out mid-scroll. Re-fetching keeps them where they are.
+   */
   useEffect(() => {
-    const timer = setTimeout(() => window.location.reload(), 4.5 * 60 * 1000)
-    return () => clearTimeout(timer)
-  }, [])
+    const timer = setInterval(async () => {
+      const wanted = photosRef.current.length
+      const fresh: GalleryPhoto[] = []
+      let cursor: number | null | undefined
+      while (fresh.length < wanted) {
+        const qs = cursor === undefined || cursor === null ? '' : `?after=${cursor}`
+        const res = await fetch(`/api/public/gallery/${slug}${qs}`)
+        if (!res.ok) return
+        const page = (await res.json()) as { photos: GalleryPhoto[]; nextCursor: number | null }
+        fresh.push(...page.photos)
+        cursor = page.nextCursor
+        if (cursor === null) break
+      }
+      setPhotos(fresh)
+    }, 4.5 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [slug])
 
   /**
    * Re-check with the server whenever the browser restores this page from its
@@ -158,9 +184,8 @@ export function Gallery({
   async function lock() {
     setLocking(true)
     await fetch(`/api/public/gallery/${slug}/lock`, { method: 'POST' })
-    // A full load, not a router refresh: this must leave nothing of the gallery
-    // in the history entry the next person could go Back to.
-    window.location.href = `/g/${slug}`
+    // Drop the photographs out of the DOM immediately, then let the gate render.
+    onRelock()
   }
 
   return (

@@ -144,7 +144,9 @@ test('lead publishes a gallery and a customer opens it with the PIN', async ({ b
 
   // The lightbox fetches the full-resolution original through the gallery path.
   await customer.getByRole('button', { name: /^Open / }).first().click()
-  await expect(customer.locator('[role=dialog] img')).toBeVisible({ timeout: 20_000 })
+  // Two images are stacked in the lightbox: the cached preview and the
+  // full-resolution file that crossfades over it.
+  await expect(customer.locator('[role=dialog] img').first()).toBeVisible({ timeout: 20_000 })
   await customer.keyboard.press('Escape')
 
   // --- unpublishing revokes the customer's existing session -------------

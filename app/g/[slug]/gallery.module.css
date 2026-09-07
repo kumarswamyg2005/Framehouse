@@ -373,28 +373,44 @@
   min-width: 0;
 }
 
+/* The preview and the full file are stacked so the swap is a crossfade in
+   place rather than a reflow. */
 .lightboxStage {
+  position: relative;
   display: grid;
   place-items: center;
   padding: 0 clamp(12px, 3vw, 28px);
   min-height: 0;
 }
 
-.lightboxStage img {
+.lightboxImage {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
   border-radius: 2px;
-  animation: lb-img var(--dur-overlay) var(--ease-out-expo) both;
 }
 
-@keyframes lb-img {
-  from { opacity: 0; transform: scale(0.985); }
-  to { opacity: 1; transform: none; }
+.lightboxFull {
+  position: absolute;
+  inset: 0;
+  margin: auto;
 }
+
+/* The low-resolution preview stays underneath until the real file has painted,
+   then leaves. Fading rather than unmounting prevents a one-frame gap. */
+.lightboxPreviewGone {
+  opacity: 0;
+  transition: opacity 300ms var(--ease-out);
+}
+
+/* No blanket rule on `.lightboxStage img` here.
+   It used to carry the entrance animation, and an animation's fill state wins
+   over normal declarations in the cascade — so it pinned both images to
+   opacity 1 and the preview never faded out from under the full-resolution
+   file. Sizing lives on .lightboxImage; arrival is handled by .photoFade. */
 
 @media (prefers-reduced-motion: reduce) {
-  .lightbox, .lightboxStage img { animation: none; }
+  .lightbox { animation: none; }
 }
 
 .lightboxBottom {

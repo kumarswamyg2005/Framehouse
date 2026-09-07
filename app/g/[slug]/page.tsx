@@ -1,8 +1,5 @@
 import type { Metadata } from 'next'
-import { hasGalleryAccess } from '@/lib/auth/session'
-import { currentPinVersion, getPublicGallery } from '@/lib/data/gallery'
-import { Gallery } from './Gallery'
-import { PinGate } from './PinGate'
+import { GalleryClient } from './GalleryClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,38 +9,16 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
+/**
+ * Every arrival here renders the PIN gate.
+ *
+ * The server deliberately does not look at the gallery cookie to decide what to
+ * render. If it did, a person who unlocked the gallery once would walk straight
+ * back into it from their history for the next two hours — which is how a
+ * session behaves, and not how a PIN should. The cookie still authorises the
+ * requests the unlocked page makes; it just no longer skips the gate.
+ */
 export default async function GalleryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-
-  /**
-   * The gate is rendered for every visitor without a valid cookie — including
-   * ones whose slug does not exist. Nothing on this page reveals whether the
-   * gallery is real until the correct PIN is entered, so the URL cannot be used
-   * to enumerate galleries.
-   */
-  const pinVersion = await currentPinVersion(slug)
-  if (pinVersion === null || !(await hasGalleryAccess(slug, pinVersion))) {
-    return <PinGate slug={slug} />
-  }
-
-  // Re-read live, so unpublishing revokes an already-issued cookie.
-  let gallery
-  try {
-    gallery = await getPublicGallery(slug)
-  } catch {
-    return <PinGate slug={slug} />
-  }
-
-  return (
-    <Gallery
-      slug={slug}
-      title={gallery.title}
-      credit={gallery.credit}
-      eventName={gallery.eventName}
-      publishedAt={gallery.publishedAt ? gallery.publishedAt.toISOString() : null}
-      total={gallery.total}
-      photos={gallery.photos}
-      nextCursor={gallery.nextCursor}
-    />
-  )
+  return <GalleryClient slug={slug} />
 }
